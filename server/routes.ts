@@ -4,7 +4,64 @@ import { storage } from "./storage";
 import { insertProductSchema, insertCartItemSchema } from "@shared/schema";
 import { z } from "zod";
 
+// Extend session type for admin authentication
+declare module 'express-session' {
+  interface SessionData {
+    isAdmin?: boolean;
+    adminEmail?: string;
+  }
+}
+
+// Middleware to check if user is admin
+function requireAdmin(req: any, res: any, next: any) {
+  if (!req.session.isAdmin) {
+    return res.status(401).json({ message: "Unauthorized: Admin access required" });
+  }
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Admin Authentication
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      // Hardcoded admin credentials as specified
+      const ADMIN_EMAIL = "admin@velvetcrumbs.lk";
+      const ADMIN_PASSWORD = "@Imaan23";
+      
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        req.session.isAdmin = true;
+        req.session.adminEmail = email;
+        res.json({ success: true, message: "Admin login successful" });
+      } else {
+        res.status(401).json({ success: false, message: "Invalid credentials" });
+      }
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: "Login error: " + error.message });
+    }
+  });
+
+  app.post("/api/admin/logout", async (req, res) => {
+    try {
+      req.session.isAdmin = false;
+      req.session.adminEmail = undefined;
+      res.json({ success: true, message: "Admin logout successful" });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: "Logout error: " + error.message });
+    }
+  });
+
+  app.get("/api/admin/status", async (req, res) => {
+    try {
+      res.json({ 
+        isAdmin: !!req.session.isAdmin,
+        adminEmail: req.session.adminEmail 
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Error checking admin status: " + error.message });
+    }
+  });
   // Categories
   app.get("/api/categories", async (req, res) => {
     try {
