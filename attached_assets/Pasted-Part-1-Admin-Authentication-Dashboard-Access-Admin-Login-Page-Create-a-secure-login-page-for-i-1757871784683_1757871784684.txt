@@ -1,0 +1,95 @@
+Part 1: Admin Authentication & Dashboard Access
+Admin Login Page:
+
+Create a secure login page, for instance, at the /admin route.
+
+Authentication should be based on the following hardcoded credentials:
+
+Username: admin@velvetcrumbs.lk
+
+Password: @Imaan23
+
+Dashboard Access:
+
+Upon successful login, the user must be redirected to a new, protected admin view called the "Dashboard".
+
+This dashboard should be a new navigation tab or link, visible only after a successful admin login.
+
+Any attempt to access the dashboard URL directly without being authenticated should redirect the user back to the login page.
+
+Part 2: Admin Dashboard - Content Management (CRUD Functionality)
+The dashboard must provide a user-friendly interface to perform Create, Read, Update, and Delete (CRUD) operations for the following categories.
+
+Collections Management:
+
+An interface to manage product categories (e.g., Drinks, Spicy, Desserts).
+
+When adding or editing a collection, the following fields are required:
+
+Collection Name (e.g., "Artisanal Coffees")
+
+Description (A brief summary of the collection)
+
+Cover Image (A text field to paste an image URL from Imgur)
+
+Products Management:
+
+An interface to manage individual products within the collections.
+
+When adding or editing a product, the following fields are required:
+
+Product Name (e.g., "Caramel Macchiato")
+
+Description (Detailed product information)
+
+Price
+
+Parent Collection (A dropdown menu to select from the list of created collections)
+
+Images (A feature to add multiple image URLs from Imgur)
+
+Duration (e.g., "15 min prep time")
+
+Add-Ons Management:
+
+An interface to manage optional add-ons for products.
+
+When adding or editing an add-on, the following fields are required:
+
+Add-on Name (e.g., "Extra Shot of Espresso," "Whipped Cream")
+
+Additional Price
+
+When creating or editing a product, the admin must be able to associate multiple existing add-ons with it (e.g., using checkboxes).
+
+Part 3: Frontend Website Integration
+Dynamic Content Rendering:
+
+Remove all hardcoded/static product and collection data from the public-facing website pages.
+
+Modify the website to fetch and display all collections, products, and their details directly from the database.
+
+Page Functionality:
+
+The main menu/products page should dynamically display all available collections.
+
+Clicking on a collection should navigate to a page that displays all products associated with it.
+
+The product detail page should show all its information: name, description, price, duration, and all associated images (preferably in a gallery or carousel).
+
+Part 4: Order Management System
+Order Table View:
+
+Create a new "Orders" section within the admin dashboard.
+
+This section will display a table of all incoming orders.
+
+The table should, at a minimum, have columns for: Order ID, Customer Details, Items Ordered, Total Price, Date/Time, and Status.
+
+Order Status Management:
+
+The Status column in the order table must be interactive.
+
+The admin must be able to easily toggle or change the status of each order.
+
+The available status options should include: Placed, In Progress, Delivered, Completed, Canceled. This could be implemented as a dropdown menu or status buttons for each order row.
