@@ -31,9 +31,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ADMIN_PASSWORD = "@Imaan23";
       
       if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        req.session.isAdmin = true;
-        req.session.adminEmail = email;
-        res.json({ success: true, message: "Admin login successful" });
+        // Regenerate session to prevent session fixation attacks
+        req.session.regenerate((err) => {
+          if (err) {
+            return res.status(500).json({ success: false, message: "Session regeneration failed" });
+          }
+          
+          req.session.isAdmin = true;
+          req.session.adminEmail = email;
+          req.session.save((err) => {
+            if (err) {
+              return res.status(500).json({ success: false, message: "Session save failed" });
+            }
+            res.json({ success: true, message: "Admin login successful" });
+          });
+        });
       } else {
         res.status(401).json({ success: false, message: "Invalid credentials" });
       }
@@ -44,9 +56,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/logout", async (req, res) => {
     try {
-      req.session.isAdmin = false;
-      req.session.adminEmail = undefined;
-      res.json({ success: true, message: "Admin logout successful" });
+      // Properly destroy session and clear cookie
+      req.session.destroy((err) => {
+        if (err) {
+          return res.status(500).json({ success: false, message: "Logout error: " + err.message });
+        }
+        res.clearCookie('connect.sid'); // Default session cookie name
+        res.json({ success: true, message: "Admin logout successful" });
+      });
     } catch (error: any) {
       res.status(500).json({ success: false, message: "Logout error: " + error.message });
     }

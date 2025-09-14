@@ -10,16 +10,22 @@ app.use(express.urlencoded({ extended: false }));
 
 // Session management setup
 const pgSession = connectPgSimple(session);
+
+if (!process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET environment variable is required");
+}
+
 app.use(session({
   store: new pgSession({
     conString: process.env.DATABASE_URL,
     createTableIfMissing: true,
   }),
-  secret: process.env.SESSION_SECRET || 'velvet-crumbs-session-secret',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: false, // Set to true in production with HTTPS
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     httpOnly: true,
   }
