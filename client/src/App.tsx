@@ -13,6 +13,10 @@ import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
+import AdminCollections from "@/pages/AdminCollections";
+import AdminProducts from "@/pages/AdminProducts";
+import AdminAddons from "@/pages/AdminAddons";
+import AdminOrders from "@/pages/AdminOrders";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -27,6 +31,10 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/collections" component={AdminCollections} />
+      <Route path="/admin/products" component={AdminProducts} />
+      <Route path="/admin/addons" component={AdminAddons} />
+      <Route path="/admin/orders" component={AdminOrders} />
       <Route component={NotFound} />
     </Switch>
   );

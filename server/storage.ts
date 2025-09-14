@@ -1,12 +1,20 @@
-import { type Category, type Product, type CartItem, type InsertCategory, type InsertProduct, type InsertCartItem, type ProductWithCategory, type CartItemWithProduct, categories, products, cartItems } from "@shared/schema";
+import { 
+  type Category, type Product, type CartItem, type ProductImage, type AddOn, type ProductAddOn, type Order, type OrderItem, type OrderItemAddOn,
+  type InsertCategory, type InsertProduct, type InsertCartItem, type InsertProductImage, type InsertAddOn, type InsertProductAddOn, type InsertOrder, type InsertOrderItem, type InsertOrderItemAddOn,
+  type ProductWithCategory, type CartItemWithProduct, type ProductWithImages, type ProductWithAddOns, type OrderWithItems,
+  categories, products, cartItems, productImages, addOns, productAddOns, orders, orderItems, orderItemAddOns 
+} from "@shared/schema";
 import { db } from "./db";
-import { eq, and, ilike, or } from "drizzle-orm";
+import { eq, and, ilike, or, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Categories
   getCategories(): Promise<Category[]>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
+  getCategoryById(id: string): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined>;
+  deleteCategory(id: string): Promise<boolean>;
 
   // Products
   getProducts(): Promise<Product[]>;
@@ -15,6 +23,34 @@ export interface IStorage {
   getFeaturedProducts(): Promise<Product[]>;
   searchProducts(query: string): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
+  deleteProduct(id: string): Promise<boolean>;
+
+  // Product Images
+  getProductImages(productId: string): Promise<ProductImage[]>;
+  createProductImage(image: InsertProductImage): Promise<ProductImage>;
+  updateProductImage(id: string, image: Partial<InsertProductImage>): Promise<ProductImage | undefined>;
+  deleteProductImage(id: string): Promise<boolean>;
+  deleteProductImages(productId: string): Promise<void>;
+
+  // Add-ons
+  getAddOns(): Promise<AddOn[]>;
+  getAddOnById(id: string): Promise<AddOn | undefined>;
+  createAddOn(addOn: InsertAddOn): Promise<AddOn>;
+  updateAddOn(id: string, addOn: Partial<InsertAddOn>): Promise<AddOn | undefined>;
+  deleteAddOn(id: string): Promise<boolean>;
+
+  // Product Add-ons (Junction table)
+  getProductAddOns(productId: string): Promise<AddOn[]>;
+  addProductAddOn(productId: string, addOnId: string): Promise<ProductAddOn>;
+  removeProductAddOn(productId: string, addOnId: string): Promise<boolean>;
+  setProductAddOns(productId: string, addOnIds: string[]): Promise<void>;
+
+  // Orders
+  getOrders(): Promise<OrderWithItems[]>;
+  getOrderById(id: string): Promise<OrderWithItems | undefined>;
+  createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<OrderWithItems>;
+  updateOrderStatus(id: string, status: 'placed' | 'in_progress' | 'delivered' | 'completed' | 'canceled'): Promise<Order | undefined>;
 
   // Cart
   getCartItems(sessionId: string): Promise<CartItemWithProduct[]>;
@@ -194,9 +230,28 @@ export class DatabaseStorage implements IStorage {
     return category || undefined;
   }
 
+  async getCategoryById(id: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category || undefined;
+  }
+
   async createCategory(categoryData: InsertCategory): Promise<Category> {
     const [category] = await db.insert(categories).values(categoryData).returning();
     return category;
+  }
+
+  async updateCategory(id: string, categoryData: Partial<InsertCategory>): Promise<Category | undefined> {
+    const [category] = await db
+      .update(categories)
+      .set(categoryData)
+      .where(eq(categories.id, id))
+      .returning();
+    return category || undefined;
+  }
+
+  async deleteCategory(id: string): Promise<boolean> {
+    const result = await db.delete(categories).where(eq(categories.id, id));
+    return (result.rowCount || 0) > 0;
   }
 
   // Products
@@ -232,6 +287,222 @@ export class DatabaseStorage implements IStorage {
   async createProduct(productData: InsertProduct): Promise<Product> {
     const [product] = await db.insert(products).values(productData).returning();
     return product;
+  }
+
+  async updateProduct(id: string, productData: Partial<InsertProduct>): Promise<Product | undefined> {
+    const [product] = await db
+      .update(products)
+      .set(productData)
+      .where(eq(products.id, id))
+      .returning();
+    return product || undefined;
+  }
+
+  async deleteProduct(id: string): Promise<boolean> {
+    const result = await db.delete(products).where(eq(products.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Product Images
+  async getProductImages(productId: string): Promise<ProductImage[]> {
+    return await db.select().from(productImages).where(eq(productImages.productId, productId));
+  }
+
+  async createProductImage(imageData: InsertProductImage): Promise<ProductImage> {
+    const [image] = await db.insert(productImages).values(imageData).returning();
+    return image;
+  }
+
+  async updateProductImage(id: string, imageData: Partial<InsertProductImage>): Promise<ProductImage | undefined> {
+    const [image] = await db
+      .update(productImages)
+      .set(imageData)
+      .where(eq(productImages.id, id))
+      .returning();
+    return image || undefined;
+  }
+
+  async deleteProductImage(id: string): Promise<boolean> {
+    const result = await db.delete(productImages).where(eq(productImages.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async deleteProductImages(productId: string): Promise<void> {
+    await db.delete(productImages).where(eq(productImages.productId, productId));
+  }
+
+  // Add-ons
+  async getAddOns(): Promise<AddOn[]> {
+    return await db.select().from(addOns);
+  }
+
+  async getAddOnById(id: string): Promise<AddOn | undefined> {
+    const [addOn] = await db.select().from(addOns).where(eq(addOns.id, id));
+    return addOn || undefined;
+  }
+
+  async createAddOn(addOnData: InsertAddOn): Promise<AddOn> {
+    const [addOn] = await db.insert(addOns).values(addOnData).returning();
+    return addOn;
+  }
+
+  async updateAddOn(id: string, addOnData: Partial<InsertAddOn>): Promise<AddOn | undefined> {
+    const [addOn] = await db
+      .update(addOns)
+      .set(addOnData)
+      .where(eq(addOns.id, id))
+      .returning();
+    return addOn || undefined;
+  }
+
+  async deleteAddOn(id: string): Promise<boolean> {
+    const result = await db.delete(addOns).where(eq(addOns.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Product Add-ons (Junction table)
+  async getProductAddOns(productId: string): Promise<AddOn[]> {
+    const result = await db
+      .select({ addOn: addOns })
+      .from(productAddOns)
+      .leftJoin(addOns, eq(productAddOns.addOnId, addOns.id))
+      .where(eq(productAddOns.productId, productId));
+    
+    return result.map(r => r.addOn).filter(Boolean) as AddOn[];
+  }
+
+  async addProductAddOn(productId: string, addOnId: string): Promise<ProductAddOn> {
+    const [productAddOn] = await db.insert(productAddOns).values({ productId, addOnId }).returning();
+    return productAddOn;
+  }
+
+  async removeProductAddOn(productId: string, addOnId: string): Promise<boolean> {
+    const result = await db
+      .delete(productAddOns)
+      .where(and(eq(productAddOns.productId, productId), eq(productAddOns.addOnId, addOnId)));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async setProductAddOns(productId: string, addOnIds: string[]): Promise<void> {
+    // Remove existing associations
+    await db.delete(productAddOns).where(eq(productAddOns.productId, productId));
+    
+    // Add new associations
+    if (addOnIds.length > 0) {
+      await db.insert(productAddOns).values(
+        addOnIds.map(addOnId => ({ productId, addOnId }))
+      );
+    }
+  }
+
+  // Orders
+  async getOrders(): Promise<OrderWithItems[]> {
+    const ordersData = await db
+      .select()
+      .from(orders)
+      .orderBy(desc(orders.createdAt));
+
+    const ordersWithItems: OrderWithItems[] = [];
+    
+    for (const order of ordersData) {
+      const items = await db
+        .select({
+          orderItem: orderItems,
+          product: products
+        })
+        .from(orderItems)
+        .leftJoin(products, eq(orderItems.productId, products.id))
+        .where(eq(orderItems.orderId, order.id));
+
+      const itemsWithAddOns = [];
+      for (const item of items) {
+        const itemAddOns = await db
+          .select({
+            orderItemAddOn: orderItemAddOns,
+            addOn: addOns
+          })
+          .from(orderItemAddOns)
+          .leftJoin(addOns, eq(orderItemAddOns.addOnId, addOns.id))
+          .where(eq(orderItemAddOns.orderItemId, item.orderItem.id));
+
+        itemsWithAddOns.push({
+          ...item.orderItem,
+          product: item.product!,
+          addOns: itemAddOns.map((a: any) => ({ ...a.orderItemAddOn, addOn: a.addOn }))
+        });
+      }
+
+      ordersWithItems.push({
+        ...order,
+        items: itemsWithAddOns as any
+      });
+    }
+
+    return ordersWithItems;
+  }
+
+  async getOrderById(id: string): Promise<OrderWithItems | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    if (!order) return undefined;
+
+    const items = await db
+      .select({
+        orderItem: orderItems,
+        product: products
+      })
+      .from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.id))
+      .where(eq(orderItems.orderId, order.id));
+
+    const itemsWithAddOns = [];
+    for (const item of items) {
+      const itemAddOns = await db
+        .select({
+          orderItemAddOn: orderItemAddOns,
+          addOn: addOns
+        })
+        .from(orderItemAddOns)
+        .leftJoin(addOns, eq(orderItemAddOns.addOnId, addOns.id))
+        .where(eq(orderItemAddOns.orderItemId, item.orderItem.id));
+
+      itemsWithAddOns.push({
+        ...item.orderItem,
+        product: item.product!,
+        addOns: itemAddOns.map((a: any) => ({ ...a.orderItemAddOn, addOn: a.addOn }))
+      });
+    }
+
+    return {
+      ...order,
+      items: itemsWithAddOns as any
+    };
+  }
+
+  async createOrder(orderData: InsertOrder, items: InsertOrderItem[]): Promise<OrderWithItems> {
+    const [order] = await db.insert(orders).values(orderData).returning();
+    
+    const createdOrderItems: any[] = [];
+    for (const itemData of items) {
+      const [orderItem] = await db.insert(orderItems).values({
+        ...itemData,
+        orderId: order.id
+      }).returning();
+      createdOrderItems.push(orderItem);
+    }
+
+    return {
+      ...order,
+      items: createdOrderItems as any
+    };
+  }
+
+  async updateOrderStatus(id: string, status: 'placed' | 'in_progress' | 'delivered' | 'completed' | 'canceled'): Promise<Order | undefined> {
+    const [order] = await db
+      .update(orders)
+      .set({ status })
+      .where(eq(orders.id, id))
+      .returning();
+    return order || undefined;
   }
 
   // Cart
