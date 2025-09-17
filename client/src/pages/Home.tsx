@@ -137,8 +137,7 @@ export default function Home() {
               </Button>
               <Button 
                 size="lg"
-                variant="outline"
-                className="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-primary transition-colors"
+                className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-orange-600 transition-colors"
                 onClick={() => setLocation("/contact")}
                 data-testid="button-contact"
               >
