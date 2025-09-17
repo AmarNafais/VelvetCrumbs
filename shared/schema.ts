@@ -264,10 +264,10 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
-// User login schema (subset of user data)
-export const loginUserSchema = insertUserSchema.pick({
-  username: true,
-  password: true,
+// User login schema - accepts either username or email
+export const loginUserSchema = z.object({
+  usernameOrEmail: z.string().min(1, "Username or email is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 // User profile update schema (excludes sensitive fields)
