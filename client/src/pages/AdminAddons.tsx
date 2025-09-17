@@ -16,9 +16,9 @@ import { ArrowLeft, Plus, Edit, Trash2, Package } from "lucide-react";
 import { AddOn, InsertAddOn, insertAddOnSchema } from "@shared/schema";
 import { z } from "zod";
 
-// Extend the insert schema to handle string input that needs conversion
+// Use the insert schema with string price validation 
 const addOnFormSchema = insertAddOnSchema.extend({
-  additionalPrice: z.string().min(1, "Additional price is required").transform((val) => parseFloat(val)),
+  additionalPrice: z.string().min(1, "Additional price is required").refine((val) => !isNaN(parseFloat(val)), "Must be a valid number"),
 });
 
 type AddOnFormData = z.infer<typeof addOnFormSchema>;
