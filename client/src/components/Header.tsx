@@ -31,11 +31,10 @@ export default function Header() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center" data-testid="link-home">
-              <img 
-                src="/attached_assets/web-logo_1757862567145.png" 
-                alt="Velvet Crumbs" 
-                className="h-10 w-auto"
-              />
+              <h1 className="text-2xl font-bold text-primary tracking-tight">
+                <span className="text-primary">Velvet</span>
+                <span className="text-accent-foreground ml-1">Crumbs</span>
+              </h1>
             </Link>
 
             {/* Main Navigation - Desktop - Centered */}

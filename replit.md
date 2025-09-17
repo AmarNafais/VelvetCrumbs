@@ -74,6 +74,5 @@ Preferred communication style: Simple, everyday language.
 - **zod**: TypeScript-first schema validation for forms and API data
 
 ### Additional Integrations
-- **@stripe/stripe-js** & **@stripe/react-stripe-js**: Payment processing integration (prepared for future implementation)
 - **date-fns**: Date utility library for formatting and manipulation
 - **connect-pg-simple**: PostgreSQL session store for Express sessions
