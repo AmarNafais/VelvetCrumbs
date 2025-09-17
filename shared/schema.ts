@@ -270,12 +270,12 @@ export const loginUserSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-// User profile update schema (excludes sensitive fields)
+// User profile update schema (excludes sensitive fields, all fields optional)
 export const updateUserProfileSchema = insertUserSchema.omit({
   username: true,
   password: true,
   isAdmin: true,
-});
+}).partial();
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -308,10 +308,7 @@ export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItemAddOn = z.infer<typeof insertOrderItemAddOnSchema>;
 export type OrderItemAddOn = typeof orderItemAddOns.$inferSelect;
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
 export type LoginUser = z.infer<typeof loginUserSchema>;
-export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 
 // Extended types for frontend
 export type ProductWithCategory = Product & { category: Category };

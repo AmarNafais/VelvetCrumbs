@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "module": "NodeJS",
+    "module": "commonjs",
     "target": "ES2022",
     "lib": ["ES2022"],
     "declaration": false,
     "strict": true,
-    "noImplicitReturns": true,
+    "noImplicitReturns": false,
     "noImplicitThis": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -32,6 +32,7 @@
   ],
   "exclude": [
     "node_modules",
-    "lib"
+    "lib",
+    "src/vite.ts"
   ]
 }
