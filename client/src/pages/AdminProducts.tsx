@@ -29,14 +29,28 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 
-// Extend the insert schema to handle string inputs that need conversion
-const productFormSchema = insertProductSchema.extend({
-  price: z.string().min(1, "Price is required").transform((val) => parseFloat(val)),
-  originalPrice: z.string().optional().transform((val) => val ? parseFloat(val) : null),
-  rating: z.string().transform((val) => parseFloat(val) || 5.0),
+// Form schema that handles string inputs from form fields
+const productFormSchema = z.object({
+  name: z.string().min(1, "Product name is required"),
+  description: z.string().min(1, "Description is required"),
+  price: z.string().min(1, "Price is required"),
+  originalPrice: z.string().optional(),
+  image: z.string().min(1, "Image URL is required"),
+  duration: z.string().optional(),
+  categoryId: z.string().min(1, "Category is required"),
+  featured: z.boolean(),
+  inStock: z.boolean(),
+  rating: z.string(),
+  tags: z.array(z.string()).default([]),
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
+
+// Admin status type
+type AdminStatus = {
+  isAdmin: boolean;
+  adminEmail?: string | null;
+};
 
 export default function AdminProducts() {
   const [, setLocation] = useLocation();
@@ -67,9 +81,10 @@ export default function AdminProducts() {
   });
 
   // Check admin authentication
-  const { data: adminStatus, isLoading: authLoading } = useQuery({
+  const { data: adminStatus, isLoading: authLoading } = useQuery<AdminStatus>({
     queryKey: ['/api/admin/status'],
     retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Fetch products
@@ -93,12 +108,24 @@ export default function AdminProducts() {
   // Fetch product images
   const { data: productImages } = useQuery<ProductImage[]>({
     queryKey: ['/api/admin/product-images', selectedProduct?.id],
+    queryFn: async () => {
+      if (!selectedProduct?.id) return [];
+      const response = await fetch(`/api/admin/product-images/${selectedProduct.id}`);
+      if (!response.ok) throw new Error('Failed to fetch product images');
+      return response.json();
+    },
     enabled: !!adminStatus?.isAdmin && !!selectedProduct,
   });
 
   // Fetch product add-ons associations
-  const { data: productAddOns } = useQuery<{productId: string, addOnId: string, addOn: AddOn}[]>({
+  const { data: productAddOns } = useQuery<AddOn[]>({
     queryKey: ['/api/admin/product-addons', selectedProduct?.id],
+    queryFn: async () => {
+      if (!selectedProduct?.id) return [];
+      const response = await fetch(`/api/admin/product-addons/${selectedProduct.id}`);
+      if (!response.ok) throw new Error('Failed to fetch product add-ons');
+      return response.json();
+    },
     enabled: !!adminStatus?.isAdmin && !!selectedProduct,
   });
 
@@ -177,10 +204,25 @@ export default function AdminProducts() {
   });
 
   const onSubmit = (data: ProductFormData) => {
+    // Convert form data to API format
+    const apiData: InsertProduct = {
+      name: data.name,
+      description: data.description,
+      price: parseFloat(data.price),
+      originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : null,
+      image: data.image,
+      duration: data.duration || null,
+      categoryId: data.categoryId,
+      featured: data.featured,
+      inStock: data.inStock,
+      rating: parseFloat(data.rating) || 5.0,
+      tags: data.tags,
+    };
+
     if (editingProduct) {
-      updateMutation.mutate({ id: editingProduct.id, data });
+      updateMutation.mutate({ id: editingProduct.id, data: apiData });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(apiData);
     }
   };
 
@@ -194,9 +236,9 @@ export default function AdminProducts() {
       image: product.image,
       duration: product.duration || "",
       categoryId: product.categoryId,
-      featured: product.featured,
-      inStock: product.inStock,
-      rating: product.rating.toString(),
+      featured: product.featured || false,
+      inStock: product.inStock !== false,
+      rating: (product.rating || 5.0).toString(),
       tags: product.tags || [],
     });
     setIsDialogOpen(true);
@@ -271,8 +313,8 @@ export default function AdminProducts() {
   });
 
   const removeProductAddOnMutation = useMutation({
-    mutationFn: async (associationId: string) => {
-      await apiRequest('DELETE', `/api/admin/product-addons/${associationId}`);
+    mutationFn: async ({ productId, addOnId }: { productId: string; addOnId: string }) => {
+      await apiRequest('DELETE', `/api/admin/product-addons/${productId}/${addOnId}`);
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Add-on removed successfully." });
@@ -296,7 +338,7 @@ export default function AdminProducts() {
 
   const getAvailableAddOns = () => {
     if (!addons || !productAddOns) return addons;
-    const associatedAddOnIds = productAddOns.map(pa => pa.addOnId);
+    const associatedAddOnIds = productAddOns.map(addon => addon.id);
     return addons.filter(addon => !associatedAddOnIds.includes(addon.id));
   };
 

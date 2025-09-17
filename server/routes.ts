@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertCartItemSchema, insertCategorySchema, insertAddOnSchema } from "@shared/schema";
+import { insertProductSchema, insertCartItemSchema, insertCategorySchema, insertAddOnSchema, insertProductImageSchema, insertProductAddOnSchema } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
 
@@ -194,6 +194,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ message: "Error deleting add-on: " + error.message });
+    }
+  });
+
+  // Product Images Management
+  app.get("/api/admin/product-images/:productId", requireAdmin, async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const images = await storage.getProductImages(productId);
+      res.json(images);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching product images: " + error.message });
+    }
+  });
+
+  app.post("/api/admin/product-images", requireAdmin, async (req, res) => {
+    try {
+      const imageData = insertProductImageSchema.parse(req.body);
+      const image = await storage.createProductImage(imageData);
+      res.status(201).json(image);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Error creating product image: " + error.message });
+    }
+  });
+
+  app.delete("/api/admin/product-images/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteProductImage(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Product image not found" });
+      }
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ message: "Error deleting product image: " + error.message });
+    }
+  });
+
+  // Product Add-ons Management
+  app.get("/api/admin/product-addons/:productId", requireAdmin, async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const associations = await storage.getProductAddOns(productId);
+      res.json(associations);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching product add-ons: " + error.message });
+    }
+  });
+
+  app.post("/api/admin/product-addons", requireAdmin, async (req, res) => {
+    try {
+      const associationData = insertProductAddOnSchema.parse(req.body);
+      const association = await storage.addProductAddOn(associationData.productId, associationData.addOnId);
+      res.status(201).json(association);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Error creating product add-on association: " + error.message });
+    }
+  });
+
+  app.delete("/api/admin/product-addons/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      // For delete by ID, we need to get the association first
+      const associations = await storage.getProductAddOns('');
+      const association = associations.find((a: any) => a.id === id);
+      if (!association) {
+        return res.status(404).json({ message: "Product add-on association not found" });
+      }
+      const deleted = await storage.removeProductAddOn(association.productId, association.addOnId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Product add-on association not found" });
+      }
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ message: "Error deleting product add-on association: " + error.message });
     }
   });
 
