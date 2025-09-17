@@ -461,8 +461,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate order data structure
       const validatedOrderData = insertOrderSchema.parse(orderData);
       
-      // Validate order items
-      const validatedItems = items.map(item => insertOrderItemSchema.parse(item));
+      // Validate order items (omit orderId since it's assigned by server)
+      const orderItemValidationSchema = insertOrderItemSchema.omit({ orderId: true });
+      const validatedItems = items.map(item => orderItemValidationSchema.parse(item));
       
       // Create the order
       const order = await storage.createOrder(validatedOrderData, validatedItems);
@@ -470,6 +471,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(order);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
+        console.log("Order validation error:", JSON.stringify(error.errors, null, 2));
+        console.log("Request body:", JSON.stringify(req.body, null, 2));
         return res.status(400).json({ message: "Invalid order data", errors: error.errors });
       }
       res.status(500).json({ message: "Error creating order: " + error.message });
