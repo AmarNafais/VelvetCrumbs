@@ -5,11 +5,14 @@ import ProductCategories from "@/components/ProductCategories";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Star, Clock, Award, Calendar, Phone } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import type { Product } from "@shared/schema";
 
 export default function Home() {
+  const [, setLocation] = useLocation();
+  
   const { data: valueProducts = [] } = useQuery<Product[]>({
     queryKey: ["/api/products", "value"],
     queryFn: () => fetch("/api/products").then(res => res.json().then(products => 
@@ -136,6 +139,7 @@ export default function Home() {
                 size="lg"
                 variant="outline"
                 className="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-primary transition-colors"
+                onClick={() => setLocation("/contact")}
                 data-testid="button-contact"
               >
                 <Phone className="mr-2 h-5 w-5" />
