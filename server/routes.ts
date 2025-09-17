@@ -468,10 +468,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create the order
       const order = await storage.createOrder(validatedOrderData, validatedItems);
+      console.log('Order created successfully, attempting to send email notification...');
       
       // Send email notification (don't block the response if email fails)
       try {
-        await sendOrderNotification(order as any);
+        console.log('Calling sendOrderNotification...');
+        const emailResult = await sendOrderNotification(order as any);
+        console.log('Email notification result:', emailResult);
       } catch (emailError) {
         console.error('Failed to send order notification email:', emailError);
         // Continue without failing the order creation

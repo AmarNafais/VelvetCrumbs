@@ -137,6 +137,10 @@ const generateOrderEmailHTML = (order: OrderWithItems): string => {
 
 // Send order notification email
 export const sendOrderNotification = async (order: OrderWithItems): Promise<boolean> => {
+  console.log('Starting email notification process for order:', order.id);
+  console.log('Gmail credentials check - User:', process.env.GMAIL_USER ? 'Set' : 'Not set');
+  console.log('Gmail credentials check - Password:', process.env.GMAIL_APP_PASSWORD ? 'Set' : 'Not set');
+  
   try {
     const mailOptions = {
       from: {
