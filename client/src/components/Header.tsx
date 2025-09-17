@@ -93,28 +93,15 @@ export default function Header() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-2"
-                    onClick={() => setLocation("/auth")}
-                    data-testid="button-login"
-                  >
-                    <LogIn className="h-5 w-5" />
-                    <span className="hidden md:inline ml-1">Login</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="p-2"
-                    onClick={() => setLocation("/auth")}
-                    data-testid="button-signup"
-                  >
-                    <UserPlus className="h-5 w-5" />
-                    <span className="hidden md:inline ml-1">Sign Up</span>
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="p-2"
+                  onClick={() => setLocation("/auth")}
+                  data-testid="button-login"
+                >
+                  <LogIn className="h-5 w-5" />
+                </Button>
               )}
 
               {/* Cart Button */}
