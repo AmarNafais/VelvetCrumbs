@@ -44,8 +44,11 @@ export interface IStorage {
 
   // Product Add-ons (Junction table)
   getProductAddOns(productId: string): Promise<AddOn[]>;
+  getAllProductAddOns(): Promise<ProductAddOn[]>;
+  getProductAddOnById(id: string): Promise<ProductAddOn | undefined>;
   addProductAddOn(productId: string, addOnId: string): Promise<ProductAddOn>;
   removeProductAddOn(productId: string, addOnId: string): Promise<boolean>;
+  removeProductAddOnById(id: string): Promise<boolean>;
   setProductAddOns(productId: string, addOnIds: string[]): Promise<void>;
 
   // Orders
@@ -408,6 +411,15 @@ export class DatabaseStorage implements IStorage {
     return result.map(r => r.addOn).filter(Boolean) as AddOn[];
   }
 
+  async getAllProductAddOns(): Promise<ProductAddOn[]> {
+    return await db.select().from(productAddOns);
+  }
+
+  async getProductAddOnById(id: string): Promise<ProductAddOn | undefined> {
+    const [result] = await db.select().from(productAddOns).where(eq(productAddOns.id, id));
+    return result || undefined;
+  }
+
   async addProductAddOn(productId: string, addOnId: string): Promise<ProductAddOn> {
     const [productAddOn] = await db.insert(productAddOns).values({ productId, addOnId }).returning();
     return productAddOn;
@@ -417,6 +429,13 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(productAddOns)
       .where(and(eq(productAddOns.productId, productId), eq(productAddOns.addOnId, addOnId)));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async removeProductAddOnById(id: string): Promise<boolean> {
+    const result = await db
+      .delete(productAddOns)
+      .where(eq(productAddOns.id, id));
     return (result.rowCount || 0) > 0;
   }
 
@@ -547,9 +566,27 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, orderId));
 
-    const items = orderItemsWithProducts.map(row => ({
-      ...row.orderItem,
-      product: row.product
+    // Get add-ons for each order item
+    const items = await Promise.all(orderItemsWithProducts.map(async (row) => {
+      const orderItemAddOnsResult = await db
+        .select({
+          orderItemAddOn: orderItemAddOns,
+          addOn: addOns
+        })
+        .from(orderItemAddOns)
+        .leftJoin(addOns, eq(orderItemAddOns.addOnId, addOns.id))
+        .where(eq(orderItemAddOns.orderItemId, row.orderItem.id));
+
+      const addOnsWithData = orderItemAddOnsResult.map(addOnRow => ({
+        ...addOnRow.orderItemAddOn,
+        addOn: addOnRow.addOn
+      }));
+
+      return {
+        ...row.orderItem,
+        product: row.product,
+        addOns: addOnsWithData
+      };
     }));
 
     return {

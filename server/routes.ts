@@ -262,13 +262,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/product-addons/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      // For delete by ID, we need to get the association first
-      const associations = await storage.getProductAddOns('');
-      const association = associations.find((a: any) => a.id === id);
-      if (!association) {
-        return res.status(404).json({ message: "Product add-on association not found" });
-      }
-      const deleted = await storage.removeProductAddOn(association.productId, association.addOnId);
+      // Delete by association ID directly
+      const deleted = await storage.removeProductAddOnById(id);
       if (!deleted) {
         return res.status(404).json({ message: "Product add-on association not found" });
       }
