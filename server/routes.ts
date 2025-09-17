@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertProductSchema, insertCartItemSchema, insertCategorySchema, insertAddOnSchema, insertProductImageSchema, insertProductAddOnSchema, insertOrderSchema, insertOrderItemSchema } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
+import { sendOrderNotification } from "./emailService";
 
 // Middleware to check if user is admin
 function requireAdmin(req: any, res: any, next: any) {
@@ -467,6 +468,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create the order
       const order = await storage.createOrder(validatedOrderData, validatedItems);
+      
+      // Send email notification (don't block the response if email fails)
+      try {
+        await sendOrderNotification(order as any);
+      } catch (emailError) {
+        console.error('Failed to send order notification email:', emailError);
+        // Continue without failing the order creation
+      }
       
       res.status(201).json(order);
     } catch (error: any) {
