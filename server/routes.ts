@@ -473,8 +473,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send email notification (don't block the response if email fails)
       try {
         console.log('Calling sendOrderNotification...');
-        const emailResult = await sendOrderNotification(order as any);
-        console.log('Email notification result:', emailResult);
+        // Get order with populated product data for email
+        const orderWithProducts = await storage.getOrderWithProducts(order.id);
+        if (orderWithProducts) {
+          const emailResult = await sendOrderNotification(orderWithProducts);
+          console.log('Email notification result:', emailResult);
+        } else {
+          console.error('Could not retrieve order with products for email notification');
+        }
       } catch (emailError) {
         console.error('Failed to send order notification email:', emailError);
         // Continue without failing the order creation

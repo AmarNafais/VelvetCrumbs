@@ -52,6 +52,7 @@ export interface IStorage {
   getOrders(): Promise<OrderWithItems[]>;
   getOrderById(id: string): Promise<OrderWithItems | undefined>;
   createOrder(order: InsertOrder, items: Omit<InsertOrderItem, 'orderId'>[]): Promise<OrderWithItems>;
+  getOrderWithProducts(orderId: string): Promise<OrderWithItems | null>;
   updateOrderStatus(id: string, status: 'placed' | 'in_progress' | 'delivered' | 'completed' | 'canceled'): Promise<Order | undefined>;
 
   // Cart
@@ -529,6 +530,31 @@ export class DatabaseStorage implements IStorage {
     return {
       ...order,
       items: createdOrderItems as any
+    };
+  }
+
+  // Get order with populated product data for emails
+  async getOrderWithProducts(orderId: string): Promise<OrderWithItems | null> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
+    if (!order) return null;
+
+    const orderItemsWithProducts = await db
+      .select({
+        orderItem: orderItems,
+        product: products
+      })
+      .from(orderItems)
+      .innerJoin(products, eq(orderItems.productId, products.id))
+      .where(eq(orderItems.orderId, orderId));
+
+    const items = orderItemsWithProducts.map(row => ({
+      ...row.orderItem,
+      product: row.product
+    }));
+
+    return {
+      ...order,
+      items
     };
   }
 
