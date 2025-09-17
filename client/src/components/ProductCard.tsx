@@ -30,7 +30,7 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
   const rating = parseFloat(product.rating || "5.0");
 
   return (
-    <div className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 group" data-testid={`product-card-${product.id}`}>
+    <div className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 group h-full flex flex-col" data-testid={`product-card-${product.id}`}>
       <div className="relative overflow-hidden">
         <Link href={`/product/${product.id}`}>
           <img
@@ -60,12 +60,12 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
         </button>
       </div>
       
-      <div className="p-6">
-        <Link href={`/product/${product.id}`} className="block mb-4">
-          <h3 className="text-lg font-semibold text-foreground mb-2" data-testid={`product-name-${product.id}`}>
+      <div className="p-6 flex flex-col flex-1">
+        <Link href={`/product/${product.id}`} className="block mb-4 flex-1">
+          <h3 className="text-lg font-semibold text-foreground mb-2 h-14 line-clamp-2" data-testid={`product-name-${product.id}`}>
             {product.name}
           </h3>
-          <p className="text-sm text-muted-foreground mb-4" data-testid={`product-description-${product.id}`}>
+          <p className="text-sm text-muted-foreground mb-4 h-16 line-clamp-3" data-testid={`product-description-${product.id}`}>
             {product.description}
           </p>
         </Link>
@@ -101,7 +101,7 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
         </div>
 
         <Button
-          className="w-full"
+          className="w-full mt-auto"
           onClick={handleAddToCart}
           data-testid={`button-add-cart-${product.id}`}
         >
