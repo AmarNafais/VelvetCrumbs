@@ -29,9 +29,9 @@ interface Order {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  totalAmount: string;
+  total: string;
   status: 'placed' | 'in_progress' | 'delivered' | 'completed' | 'canceled';
-  orderDate: string;
+  createdAt: string;
   items: OrderItem[];
 }
 
@@ -225,11 +225,11 @@ export default function AdminOrders() {
                             </div>
                           </TableCell>
                           <TableCell className="font-medium">
-                            LKR {order.totalAmount}
+                            LKR {order.total}
                           </TableCell>
                           <TableCell>{getStatusBadge(order.status)}</TableCell>
                           <TableCell className="text-sm text-gray-500">
-                            {formatDate(order.orderDate)}
+                            {formatDate(order.createdAt)}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
