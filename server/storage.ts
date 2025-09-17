@@ -51,7 +51,7 @@ export interface IStorage {
   // Orders
   getOrders(): Promise<OrderWithItems[]>;
   getOrderById(id: string): Promise<OrderWithItems | undefined>;
-  createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<OrderWithItems>;
+  createOrder(order: InsertOrder, items: Omit<InsertOrderItem, 'orderId'>[]): Promise<OrderWithItems>;
   updateOrderStatus(id: string, status: 'placed' | 'in_progress' | 'delivered' | 'completed' | 'canceled'): Promise<Order | undefined>;
 
   // Cart
@@ -514,7 +514,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async createOrder(orderData: InsertOrder, items: InsertOrderItem[]): Promise<OrderWithItems> {
+  async createOrder(orderData: InsertOrder, items: Omit<InsertOrderItem, 'orderId'>[]): Promise<OrderWithItems> {
     const [order] = await db.insert(orders).values(orderData).returning();
     
     const createdOrderItems: any[] = [];
