@@ -55,9 +55,9 @@ interface Order {
   id: string;
   customerName: string;
   customerEmail: string;
-  totalAmount: string;
+  total: string;
   status: 'placed' | 'in_progress' | 'delivered' | 'completed' | 'canceled';
-  orderDate: string;
+  createdAt: string;
 }
 
 interface User {
@@ -315,13 +315,13 @@ export default function AdminDashboard() {
                   {orders.slice(0, 5).map((order) => (
                     <TableRow key={order.id}>
                       <TableCell>{order.customerName}</TableCell>
-                      <TableCell>LKR {order.totalAmount}</TableCell>
+                      <TableCell>LKR {order.total}</TableCell>
                       <TableCell>
                         <Badge className={statusColors[order.status]}>
                           {order.status.replace('_', ' ')}
                         </Badge>
                       </TableCell>
-                      <TableCell>{formatDate(order.orderDate)}</TableCell>
+                      <TableCell>{formatDate(order.createdAt)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -675,13 +675,13 @@ export default function AdminDashboard() {
                     <TableRow key={order.id} data-testid={`row-order-${order.id}`}>
                       <TableCell className="font-medium">{order.customerName}</TableCell>
                       <TableCell>{order.customerEmail}</TableCell>
-                      <TableCell>LKR {order.totalAmount}</TableCell>
+                      <TableCell>LKR {order.total}</TableCell>
                       <TableCell>
                         <Badge className={statusColors[order.status]}>
                           {order.status.replace('_', ' ')}
                         </Badge>
                       </TableCell>
-                      <TableCell>{formatDate(order.orderDate)}</TableCell>
+                      <TableCell>{formatDate(order.createdAt)}</TableCell>
                     </TableRow>
                   ))
                 ) : (
