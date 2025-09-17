@@ -38,38 +38,44 @@ export default function Header() {
               />
             </Link>
 
-            {/* Main Navigation - Desktop */}
-            <nav className="hidden md:flex items-center space-x-8" data-testid="nav-desktop">
-              <Link href="/" className="text-foreground hover:text-primary transition-colors" data-testid="link-home-nav">
+            {/* Main Navigation - Desktop - Centered */}
+            <nav className="hidden md:flex items-center justify-center flex-1 space-x-8" data-testid="nav-desktop">
+              <Link href="/" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-home-nav">
                 Home
               </Link>
-              <CategoryDropdown />
-              <Link href="/about" className="text-foreground hover:text-primary transition-colors" data-testid="link-about">
-                About
+              <Link href="/about" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-about">
+                About Us
               </Link>
-              <Link href="/contact" className="text-foreground hover:text-primary transition-colors" data-testid="link-contact">
-                Contact
+              <Link href="/products" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-services">
+                Services
+              </Link>
+              <Link href="/products?featured=true" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-featured">
+                Featured
+              </Link>
+              <Link href="/contact" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-contact">
+                Contact Me
               </Link>
             </nav>
 
-            {/* Search and Cart */}
-            <div className="flex items-center space-x-4">
-              {/* Search Bar - Desktop */}
-              <form onSubmit={handleSearch} className="hidden md:flex items-center bg-muted rounded-full px-4 py-2" data-testid="form-search">
-                <Search className="text-muted-foreground mr-2 h-4 w-4" />
-                <Input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-transparent border-none outline-none text-sm w-48 p-0 h-auto focus-visible:ring-0"
-                  data-testid="input-search"
-                />
-              </form>
+            {/* Right Side Icons */}
+            <div className="flex items-center space-x-3">
+              {/* Search Icon */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-2"
+                onClick={() => {
+                  // Toggle search functionality - for now just navigate to products
+                  setLocation('/products');
+                }}
+                data-testid="button-search"
+              >
+                <Search className="h-5 w-5" />
+              </Button>
 
-              {/* Authentication Buttons */}
+              {/* Authentication & Cart */}
               {user ? (
-                <div className="flex items-center space-x-2">
+                <>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -78,7 +84,6 @@ export default function Header() {
                     data-testid="button-profile"
                   >
                     <User className="h-5 w-5" />
-                    <span className="hidden md:inline ml-1">{user.firstName || user.username}</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -89,9 +94,8 @@ export default function Header() {
                     data-testid="button-logout"
                   >
                     <LogOut className="h-5 w-5" />
-                    <span className="hidden md:inline ml-1">Logout</span>
                   </Button>
-                </div>
+                </>
               ) : (
                 <Button
                   variant="ghost"
@@ -140,35 +144,43 @@ export default function Header() {
             <nav className="p-4 space-y-4">
               <Link
                 href="/"
-                className="block text-foreground hover:text-primary transition-colors"
+                className="block text-foreground hover:text-primary transition-colors font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
                 data-testid="link-home-mobile"
               >
                 Home
               </Link>
               <Link
-                href="/products"
-                className="block text-foreground hover:text-primary transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-                data-testid="link-products-mobile"
-              >
-                Products
-              </Link>
-              <Link
                 href="/about"
-                className="block text-foreground hover:text-primary transition-colors"
+                className="block text-foreground hover:text-primary transition-colors font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
                 data-testid="link-about-mobile"
               >
-                About
+                About Us
+              </Link>
+              <Link
+                href="/products"
+                className="block text-foreground hover:text-primary transition-colors font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+                data-testid="link-services-mobile"
+              >
+                Services
+              </Link>
+              <Link
+                href="/products?featured=true"
+                className="block text-foreground hover:text-primary transition-colors font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+                data-testid="link-featured-mobile"
+              >
+                Featured
               </Link>
               <Link
                 href="/contact"
-                className="block text-foreground hover:text-primary transition-colors"
+                className="block text-foreground hover:text-primary transition-colors font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
                 data-testid="link-contact-mobile"
               >
-                Contact
+                Contact Me
               </Link>
               <div className="pt-4 border-t border-border">
                 <form onSubmit={handleSearch} className="flex gap-2" data-testid="form-search-mobile">
