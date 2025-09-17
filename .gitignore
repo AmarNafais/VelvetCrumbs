@@ -1,3 +1,31 @@
+# Dependencies
+node_modules/
+functions/node_modules/
+
+# Build outputs
+dist/
+build/
+functions/lib/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Cache and temporary files
+.cache/
+.parcel-cache/
+*.tmp
+*.temp
+
+# Original entries
 node_modules
 dist
 .DS_Store
