@@ -69,27 +69,47 @@ const generateOrderEmailHTML = (order: OrderWithItems): string => {
 
             <!-- Order Details -->
             <div style="padding: 30px;">
-                <div style="background-color: hsl(45, 20%, 92%); padding: 20px; border-radius: 10px; margin-bottom: 30px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                        <div>
-                            <div style="font-weight: 600; color: hsl(15, 15%, 15%); margin-bottom: 5px;">Order ID:</div>
-                            <div style="font-family: monospace; color: hsl(15, 10%, 45%);">#${order.id.substring(0, 8).toUpperCase()}</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-weight: 600; color: hsl(15, 15%, 15%); margin-bottom: 5px;">Order Date:</div>
-                            <div style="color: hsl(15, 10%, 45%);">${formatDate(order.createdAt)}</div>
-                        </div>
-                    </div>
+                <div style="background-color: hsl(45, 20%, 92%); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 1px solid hsl(45, 15%, 88%);">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 50%; padding: 10px 15px; vertical-align: top;">
+                                <div style="font-weight: 600; color: hsl(15, 15%, 15%); margin-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Order ID</div>
+                                <div style="font-family: 'Courier New', monospace; color: hsl(15, 10%, 45%); font-size: 16px; font-weight: 500;">#${order.id.substring(0, 8).toUpperCase()}</div>
+                            </td>
+                            <td style="width: 50%; padding: 10px 15px; vertical-align: top; text-align: right;">
+                                <div style="font-weight: 600; color: hsl(15, 15%, 15%); margin-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Order Date</div>
+                                <div style="color: hsl(15, 10%, 45%); font-size: 16px; font-weight: 500;">${formatDate(order.createdAt)}</div>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
 
                 <!-- Customer Information -->
                 <div style="margin-bottom: 30px;">
-                    <h3 style="color: hsl(15, 15%, 15%); border-bottom: 2px solid hsl(33, 85%, 55%); padding-bottom: 10px;">Customer Information</h3>
-                    <div style="background-color: hsl(45, 20%, 92%); padding: 20px; border-radius: 10px;">
-                        <div style="margin-bottom: 10px;"><strong>Name:</strong> ${order.customerName}</div>
-                        <div style="margin-bottom: 10px;"><strong>Email:</strong> ${order.customerEmail}</div>
-                        <div style="margin-bottom: 10px;"><strong>Phone:</strong> ${order.customerPhone}</div>
-                        <div><strong>Address:</strong> ${order.customerAddress}</div>
+                    <h3 style="color: hsl(15, 15%, 15%); border-bottom: 2px solid hsl(33, 85%, 55%); padding-bottom: 10px; margin-bottom: 20px; font-size: 18px; font-weight: 600;">Customer Information</h3>
+                    <div style="background-color: hsl(45, 20%, 92%); padding: 25px; border-radius: 12px; border: 1px solid hsl(45, 15%, 88%);">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="width: 50%; padding: 12px 15px; vertical-align: top;">
+                                    <div style="font-weight: 600; color: hsl(15, 15%, 15%); margin-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Name</div>
+                                    <div style="color: hsl(15, 10%, 45%); font-size: 16px; font-weight: 500;">${order.customerName}</div>
+                                </td>
+                                <td style="width: 50%; padding: 12px 15px; vertical-align: top;">
+                                    <div style="font-weight: 600; color: hsl(15, 15%, 15%); margin-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Email</div>
+                                    <div style="color: hsl(15, 10%, 45%); font-size: 16px; font-weight: 500;">${order.customerEmail}</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width: 50%; padding: 12px 15px; vertical-align: top;">
+                                    <div style="font-weight: 600; color: hsl(15, 15%, 15%); margin-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Phone</div>
+                                    <div style="color: hsl(15, 10%, 45%); font-size: 16px; font-weight: 500;">${order.customerPhone}</div>
+                                </td>
+                                <td style="width: 50%; padding: 12px 15px; vertical-align: top;">
+                                    <div style="font-weight: 600; color: hsl(15, 15%, 15%); margin-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Address</div>
+                                    <div style="color: hsl(15, 10%, 45%); font-size: 16px; font-weight: 500;">${order.customerAddress}</div>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
 
