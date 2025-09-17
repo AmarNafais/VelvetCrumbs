@@ -133,7 +133,7 @@ export default function AdminDashboard() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/admin/logout');
+      const response = await apiRequest('POST', '/api/logout');
       return await response.json();
     },
     onSuccess: () => {
