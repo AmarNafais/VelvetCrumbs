@@ -216,10 +216,20 @@ export default function AdminOrders() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="space-y-1">
+                            <div className="space-y-2">
                               {order.items?.map((item, index) => (
-                                <div key={index} className="text-sm">
-                                  {item.quantity}x {item.product?.name || 'Unknown Product'}
+                                <div key={index} className="flex items-center space-x-2">
+                                  {item.product?.image && (
+                                    <img
+                                      src={item.product.image}
+                                      alt={item.product.name}
+                                      className="w-8 h-8 object-cover rounded"
+                                      data-testid={`order-item-image-${item.id}`}
+                                    />
+                                  )}
+                                  <div className="text-sm">
+                                    {item.quantity}x {item.product?.name || 'Unknown Product'}
+                                  </div>
                                 </div>
                               )) || <span className="text-gray-500">No items</span>}
                             </div>
