@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertCartItemSchema, insertCategorySchema, insertAddOnSchema, insertProductImageSchema, insertProductAddOnSchema } from "@shared/schema";
+import { insertProductSchema, insertCartItemSchema, insertCategorySchema, insertAddOnSchema, insertProductImageSchema, insertProductAddOnSchema, insertOrderSchema, insertOrderItemSchema } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
 
@@ -441,6 +441,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ message: "Error clearing cart: " + error.message });
+    }
+  });
+
+  // Order management
+  app.post("/api/orders", async (req, res) => {
+    try {
+      const { items, ...orderData } = req.body;
+      
+      // Validate required fields
+      if (!orderData.customerName || !orderData.customerEmail || !orderData.customerPhone || !orderData.customerAddress) {
+        return res.status(400).json({ message: "All customer information fields are required" });
+      }
+      
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: "Order items are required" });
+      }
+
+      // Validate order data structure
+      const validatedOrderData = insertOrderSchema.parse(orderData);
+      
+      // Validate order items
+      const validatedItems = items.map(item => insertOrderItemSchema.parse(item));
+      
+      // Create the order
+      const order = await storage.createOrder(validatedOrderData, validatedItems);
+      
+      res.status(201).json(order);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid order data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Error creating order: " + error.message });
     }
   });
 

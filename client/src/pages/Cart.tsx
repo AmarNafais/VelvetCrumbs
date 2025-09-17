@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCart } from "@/contexts/CartContext";
@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft, CreditCard } from "lucide-react";
 
 export default function Cart() {
+  const [, setLocation] = useLocation();
   const { cartItems, cartTotal, updateQuantity, removeFromCart, clearCart } = useCart();
 
   const formatPrice = (price: number) => {
@@ -178,7 +179,12 @@ export default function Cart() {
                   </div>
                   
                   <div className="space-y-3 pt-4">
-                    <Button className="w-full" size="lg" data-testid="button-checkout">
+                    <Button 
+                      className="w-full" 
+                      size="lg" 
+                      onClick={() => setLocation("/checkout")}
+                      data-testid="button-checkout"
+                    >
                       <CreditCard className="mr-2 h-5 w-5" />
                       Proceed to Checkout
                     </Button>
