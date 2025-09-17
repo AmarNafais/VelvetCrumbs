@@ -98,11 +98,12 @@ export default function AuthPage() {
         {/* Hero Section */}
         <div className="hidden md:block space-y-6">
           <div className="text-center">
-            <img 
-              src="/attached_assets/web-logo_1757862567145.png" 
-              alt="Velvet Crumbs" 
-              className="h-16 w-auto mx-auto mb-6"
-            />
+            <div className="text-center mb-6">
+              <h1 className="text-3xl font-bold text-primary tracking-tight">
+                <span className="text-primary">Velvet</span>
+                <span className="text-accent-foreground ml-1">Crumbs</span>
+              </h1>
+            </div>
             <h1 className="text-4xl font-bold text-foreground mb-4">
               Welcome to Velvet Crumbs
             </h1>

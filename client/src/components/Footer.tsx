@@ -8,7 +8,10 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Info */}
           <div className="lg:col-span-2" data-testid="section-brand">
-            <div className="text-2xl font-bold text-primary mb-4">Velvet Crumbs</div>
+            <div className="text-2xl font-bold mb-4 tracking-tight">
+              <span className="text-primary">Velvet</span>
+              <span className="text-accent-foreground ml-1">Crumbs</span>
+            </div>
             <p className="text-gray-300 leading-relaxed mb-6 max-w-md">
               Handcrafted delights for every occasion. At Velvet Crumbs, we believe that every celebration 
               deserves a touch of homemade charm. Made with love and the finest ingredients.
