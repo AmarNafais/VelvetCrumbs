@@ -32,14 +32,14 @@ const generateOrderEmailHTML = (order: OrderWithItems): string => {
   };
 
   const itemsHTML = order.items.map(item => `
-    <tr style="border-bottom: 1px solid #eee;">
+    <tr style="border-bottom: 1px solid hsl(45, 15%, 88%);">
       <td style="padding: 15px; vertical-align: top;">
         <img src="${item.product.image}" alt="${item.product.name}" 
              style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
       </td>
       <td style="padding: 15px; vertical-align: top;">
         <div style="font-weight: 600; margin-bottom: 4px;">${item.product.name}</div>
-        <div style="color: #666; font-size: 14px;">Quantity: ${item.quantity}</div>
+        <div style="color: hsl(15, 10%, 45%); font-size: 14px;">Quantity: ${item.quantity}</div>
       </td>
       <td style="padding: 15px; text-align: right; vertical-align: top; font-weight: 600;">
         ${formatPrice(item.lineTotal)}
@@ -55,10 +55,10 @@ const generateOrderEmailHTML = (order: OrderWithItems): string => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>New Order - Velvet Crumbs</title>
     </head>
-    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+    <body style="margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: hsl(44, 40%, 98%);">
         <div style="max-width: 600px; margin: 0 auto; background-color: white;">
             <!-- Header -->
-            <div style="background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%); color: white; padding: 30px; text-align: center;">
+            <div style="background: linear-gradient(135deg, hsl(33, 85%, 55%) 0%, hsl(25, 75%, 45%) 100%); color: white; padding: 30px; text-align: center;">
                 <div style="font-size: 32px; font-weight: bold; margin-bottom: 10px;">Velvet Crumbs</div>
                 <div style="font-size: 18px; opacity: 0.9;">New Order Received</div>
                 <div style="margin-top: 20px; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; display: inline-block;">
@@ -69,23 +69,23 @@ const generateOrderEmailHTML = (order: OrderWithItems): string => {
 
             <!-- Order Details -->
             <div style="padding: 30px;">
-                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                <div style="background-color: hsl(45, 20%, 92%); padding: 20px; border-radius: 10px; margin-bottom: 30px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                         <div>
-                            <div style="font-weight: 600; color: #333; margin-bottom: 5px;">Order ID:</div>
-                            <div style="font-family: monospace; color: #666;">#${order.id.substring(0, 8).toUpperCase()}</div>
+                            <div style="font-weight: 600; color: hsl(15, 15%, 15%); margin-bottom: 5px;">Order ID:</div>
+                            <div style="font-family: monospace; color: hsl(15, 10%, 45%);">#${order.id.substring(0, 8).toUpperCase()}</div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-weight: 600; color: #333; margin-bottom: 5px;">Order Date:</div>
-                            <div style="color: #666;">${formatDate(order.createdAt)}</div>
+                            <div style="font-weight: 600; color: hsl(15, 15%, 15%); margin-bottom: 5px;">Order Date:</div>
+                            <div style="color: hsl(15, 10%, 45%);">${formatDate(order.createdAt)}</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Customer Information -->
                 <div style="margin-bottom: 30px;">
-                    <h3 style="color: #333; border-bottom: 2px solid #e11d48; padding-bottom: 10px;">Customer Information</h3>
-                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px;">
+                    <h3 style="color: hsl(15, 15%, 15%); border-bottom: 2px solid hsl(33, 85%, 55%); padding-bottom: 10px;">Customer Information</h3>
+                    <div style="background-color: hsl(45, 20%, 92%); padding: 20px; border-radius: 10px;">
                         <div style="margin-bottom: 10px;"><strong>Name:</strong> ${order.customerName}</div>
                         <div style="margin-bottom: 10px;"><strong>Email:</strong> ${order.customerEmail}</div>
                         <div style="margin-bottom: 10px;"><strong>Phone:</strong> ${order.customerPhone}</div>
@@ -95,12 +95,12 @@ const generateOrderEmailHTML = (order: OrderWithItems): string => {
 
                 <!-- Order Items -->
                 <div style="margin-bottom: 30px;">
-                    <h3 style="color: #333; border-bottom: 2px solid #e11d48; padding-bottom: 10px;">Order Items</h3>
+                    <h3 style="color: hsl(15, 15%, 15%); border-bottom: 2px solid hsl(33, 85%, 55%); padding-bottom: 10px;">Order Items</h3>
                     <table style="width: 100%; border-collapse: collapse; background-color: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                         ${itemsHTML}
-                        <tr style="background-color: #f8f9fa;">
+                        <tr style="background-color: hsl(45, 20%, 92%);">
                             <td colspan="2" style="padding: 20px; font-weight: 600; font-size: 16px;">Total:</td>
-                            <td style="padding: 20px; text-align: right; font-weight: bold; font-size: 18px; color: #e11d48;">
+                            <td style="padding: 20px; text-align: right; font-weight: bold; font-size: 18px; color: hsl(33, 85%, 55%);">
                                 ${formatPrice(order.total)}
                             </td>
                         </tr>
@@ -109,19 +109,19 @@ const generateOrderEmailHTML = (order: OrderWithItems): string => {
 
                 <!-- Action Button -->
                 <div style="text-align: center; margin: 30px 0;">
-                    <div style="background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%); color: white; padding: 15px 30px; border-radius: 8px; display: inline-block; font-weight: 600; text-decoration: none;">
+                    <div style="background: linear-gradient(135deg, hsl(33, 85%, 55%) 0%, hsl(25, 75%, 45%) 100%); color: white; padding: 15px 30px; border-radius: 8px; display: inline-block; font-weight: 600; text-decoration: none;">
                         View Order in Admin Panel
                     </div>
                 </div>
 
                 <!-- Footer Note -->
-                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; color: #666; font-size: 14px;">
+                <div style="background-color: hsl(45, 20%, 92%); padding: 20px; border-radius: 10px; text-align: center; color: hsl(15, 10%, 45%); font-size: 14px;">
                     <p style="margin: 0;">Please contact the customer within 24 hours to confirm order details and delivery arrangements.</p>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div style="background-color: #333; color: white; padding: 20px; text-align: center;">
+            <div style="background-color: hsl(15, 15%, 15%); color: white; padding: 20px; text-align: center;">
                 <div style="font-size: 14px; opacity: 0.8;">
                     Velvet Crumbs - Premium Sri Lankan Bakery
                 </div>
