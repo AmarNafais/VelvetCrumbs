@@ -12,7 +12,6 @@ import ProductDetail from "@/pages/ProductDetail";
 import Cart from "@/pages/Cart";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
-import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AdminCollections from "@/pages/AdminCollections";
 import AdminProducts from "@/pages/AdminProducts";
@@ -34,7 +33,6 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/profile" component={UserProfile} />
-      <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/collections" component={AdminCollections} />
       <Route path="/admin/products" component={AdminProducts} />

@@ -85,6 +85,15 @@ export function setupAuth(app: Express) {
   // User registration endpoint
   app.post("/api/register", async (req, res, next) => {
     try {
+      // SECURITY: Log and block privilege escalation attempts
+      if (req.body.hasOwnProperty('isAdmin')) {
+        console.warn(`SECURITY WARNING: Privilege escalation attempt detected in registration from IP: ${req.ip || req.connection.remoteAddress}`, {
+          timestamp: new Date().toISOString(),
+          userAgent: req.get('User-Agent'),
+          requestBody: { ...req.body, password: '[REDACTED]' }
+        });
+      }
+
       // Validate and sanitize input using Zod schema
       // Explicitly exclude isAdmin to prevent privilege escalation
       const registrationSchema = insertUserSchema.omit({ isAdmin: true }).extend({
@@ -109,6 +118,8 @@ export function setupAuth(app: Express) {
 
       // Create new user with secure defaults
       const hashedPassword = await hashPassword(password);
+      
+      // SECURITY: Explicitly force isAdmin to false - no client input can override this
       const user = await storage.createUser({
         username,
         email,
@@ -118,8 +129,14 @@ export function setupAuth(app: Express) {
         phone,
         address,
         dateOfBirth,
-        isAdmin: false, // Force false - cannot be overridden by client
+        isAdmin: false, // CRITICAL: Force false - cannot be overridden by client
       });
+
+      // SECURITY: Double-check user was created without admin privileges
+      if (user.isAdmin) {
+        console.error(`CRITICAL SECURITY BREACH: User created with admin privileges despite safeguards! User ID: ${user.id}`);
+        throw new Error("User creation security violation");
+      }
 
       // Remove password from response
       const { password: _, ...userWithoutPassword } = user;
@@ -214,6 +231,17 @@ export function setupAuth(app: Express) {
     }
 
     try {
+      // SECURITY: Log and block privilege escalation attempts in profile updates
+      if (req.body.hasOwnProperty('isAdmin') || req.body.hasOwnProperty('username') || req.body.hasOwnProperty('password')) {
+        console.warn(`SECURITY WARNING: Privilege escalation/sensitive field modification attempt in profile update from user ${req.user.id} (${req.user.username}) from IP: ${req.ip || req.connection.remoteAddress}`, {
+          timestamp: new Date().toISOString(),
+          userId: req.user.id,
+          username: req.user.username,
+          userAgent: req.get('User-Agent'),
+          suspiciousFields: Object.keys(req.body).filter(key => ['isAdmin', 'username', 'password'].includes(key))
+        });
+      }
+
       // Validate profile update data using Zod schema
       // updateUserProfileSchema already excludes sensitive fields (username, password, isAdmin)
       const profileUpdateSchema = updateUserProfileSchema.extend({
@@ -247,6 +275,15 @@ export function setupAuth(app: Express) {
 
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
+      }
+
+      // SECURITY: Verify that sensitive fields weren't modified during update
+      if (updatedUser.isAdmin !== req.user.isAdmin || updatedUser.username !== req.user.username) {
+        console.error(`CRITICAL SECURITY BREACH: Sensitive fields modified during profile update! User ID: ${req.user.id}`, {
+          before: { isAdmin: req.user.isAdmin, username: req.user.username },
+          after: { isAdmin: updatedUser.isAdmin, username: updatedUser.username }
+        });
+        throw new Error("Profile update security violation");
       }
 
       // Remove password from response
