@@ -82,7 +82,7 @@ export default function Footer() {
               <div className="flex items-start">
                 <MapPin className="text-primary mr-3 mt-1 h-4 w-4" />
                 <div>
-                  <p className="text-gray-300">Colombo, Sri Lanka</p>
+                  <p className="text-gray-300">Tihariya, Sri Lanka</p>
                   <p className="text-gray-400 text-sm">Island-wide delivery</p>
                 </div>
               </div>
