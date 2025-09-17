@@ -223,7 +223,7 @@ export default function AdminOrders() {
                                     <img
                                       src={item.product.image}
                                       alt={item.product.name}
-                                      className="w-8 h-8 object-cover rounded"
+                                      className="w-12 h-12 object-cover rounded"
                                       data-testid={`order-item-image-${item.id}`}
                                     />
                                   )}
