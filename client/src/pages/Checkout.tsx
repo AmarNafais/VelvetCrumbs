@@ -72,8 +72,8 @@ export default function Checkout() {
       const orderItems = cartItems.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: parseFloat(item.product.price),
-        lineTotal: parseFloat(item.product.price) * item.quantity
+        unitPrice: item.product.price,
+        lineTotal: (parseFloat(item.product.price) * item.quantity).toFixed(2)
       }));
 
       const response = await fetch("/api/orders", {
@@ -83,7 +83,7 @@ export default function Checkout() {
         },
         body: JSON.stringify({
           ...orderData,
-          total: total,
+          total: total.toFixed(2),
           items: orderItems
         }),
       });
