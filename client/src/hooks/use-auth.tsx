@@ -4,7 +4,7 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { insertUserSchema, User, InsertUser, UpdateUserProfile } from "@shared/schema";
+import { insertUserSchema, loginUserSchema, User, InsertUser, UpdateUserProfile } from "@shared/schema";
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,7 +19,7 @@ type AuthContextType = {
 };
 
 type LoginData = {
-  username: string;
+  usernameOrEmail: string;
   password: string;
 };
 

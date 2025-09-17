@@ -45,7 +45,7 @@ export default function AuthPage() {
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      usernameOrEmail: "",
       password: "",
     },
   });
@@ -162,21 +162,21 @@ export default function AuthPage() {
                 <TabsContent value="login" className="space-y-4">
                   <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="login-username">Username</Label>
+                      <Label htmlFor="login-usernameOrEmail">Username or Email</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                         <Input
-                          id="login-username"
+                          id="login-usernameOrEmail"
                           type="text"
-                          placeholder="Enter your username"
+                          placeholder="Enter your username or email"
                           className="pl-10"
-                          data-testid="input-login-username"
-                          {...loginForm.register("username")}
+                          data-testid="input-login-usernameOrEmail"
+                          {...loginForm.register("usernameOrEmail")}
                         />
                       </div>
-                      {loginForm.formState.errors.username && (
+                      {loginForm.formState.errors.usernameOrEmail && (
                         <p className="text-sm text-destructive">
-                          {loginForm.formState.errors.username.message}
+                          {loginForm.formState.errors.usernameOrEmail.message}
                         </p>
                       )}
                     </div>
