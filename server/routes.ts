@@ -3,77 +3,33 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProductSchema, insertCartItemSchema, insertCategorySchema, insertAddOnSchema } from "@shared/schema";
 import { z } from "zod";
-
-// Extend session type for admin authentication
-declare module 'express-session' {
-  interface SessionData {
-    isAdmin?: boolean;
-    adminEmail?: string;
-  }
-}
+import { setupAuth } from "./auth";
 
 // Middleware to check if user is admin
 function requireAdmin(req: any, res: any, next: any) {
-  if (!req.session.isAdmin) {
+  if (!req.isAuthenticated() || !req.user?.isAdmin) {
     return res.status(401).json({ message: "Unauthorized: Admin access required" });
   }
   next();
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Admin Authentication
-  app.post("/api/admin/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      
-      // Hardcoded admin credentials as specified
-      const ADMIN_EMAIL = "admin@velvetcrumbs.lk";
-      const ADMIN_PASSWORD = "@Imaan23";
-      
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        // Regenerate session to prevent session fixation attacks
-        req.session.regenerate((err) => {
-          if (err) {
-            return res.status(500).json({ success: false, message: "Session regeneration failed" });
-          }
-          
-          req.session.isAdmin = true;
-          req.session.adminEmail = email;
-          req.session.save((err) => {
-            if (err) {
-              return res.status(500).json({ success: false, message: "Session save failed" });
-            }
-            res.json({ success: true, message: "Admin login successful" });
-          });
-        });
-      } else {
-        res.status(401).json({ success: false, message: "Invalid credentials" });
-      }
-    } catch (error: any) {
-      res.status(500).json({ success: false, message: "Login error: " + error.message });
-    }
-  });
+  // Set up user authentication system
+  setupAuth(app);
 
-  app.post("/api/admin/logout", async (req, res) => {
-    try {
-      // Properly destroy session and clear cookie
-      req.session.destroy((err) => {
-        if (err) {
-          return res.status(500).json({ success: false, message: "Logout error: " + err.message });
-        }
-        res.clearCookie('connect.sid'); // Default session cookie name
-        res.json({ success: true, message: "Admin logout successful" });
-      });
-    } catch (error: any) {
-      res.status(500).json({ success: false, message: "Logout error: " + error.message });
-    }
-  });
-
+  // Admin status endpoint - now uses proper authentication
   app.get("/api/admin/status", async (req, res) => {
     try {
+      if (!req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ 
+          isAdmin: false,
+          message: "Not authenticated" 
+        });
+      }
+      
       res.json({ 
-        isAdmin: !!req.session.isAdmin,
-        adminEmail: req.session.adminEmail 
+        isAdmin: !!req.user.isAdmin,
+        adminEmail: req.user.isAdmin ? req.user.email : null
       });
     } catch (error: any) {
       res.status(500).json({ message: "Error checking admin status: " + error.message });
@@ -238,6 +194,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ message: "Error deleting add-on: " + error.message });
+    }
+  });
+
+  // Users Management
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      res.json(users);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching users: " + error.message });
     }
   });
 

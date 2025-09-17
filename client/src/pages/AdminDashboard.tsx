@@ -60,6 +60,19 @@ interface Order {
   orderDate: string;
 }
 
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  address: string | null;
+  dateOfBirth: string | null;
+  isAdmin: boolean;
+  createdAt: string;
+}
+
 type TabType = 'dashboard' | 'categories' | 'products' | 'users' | 'addons' | 'orders';
 
 const statusColors = {
@@ -103,6 +116,11 @@ export default function AdminDashboard() {
 
   const { data: orders } = useQuery<Order[]>({
     queryKey: ['/api/admin/orders'],
+    enabled: !!adminStatus?.isAdmin,
+  });
+
+  const { data: users } = useQuery<User[]>({
+    queryKey: ['/api/admin/users'],
     enabled: !!adminStatus?.isAdmin,
   });
 
@@ -193,6 +211,8 @@ export default function AdminDashboard() {
     totalProducts: products?.length || 0,
     totalAddons: addons?.length || 0,
     totalOrders: orders?.length || 0,
+    totalUsers: users?.length || 0,
+    adminUsers: users?.filter(u => u.isAdmin).length || 0,
     pendingOrders: orders?.filter(o => o.status === 'placed').length || 0,
   });
 
@@ -218,7 +238,7 @@ export default function AdminDashboard() {
           <p className="text-gray-600 dark:text-gray-400">Welcome back, {adminStatus?.adminEmail}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Categories</CardTitle>
@@ -236,6 +256,19 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalProducts}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.adminUsers} admin{stats.adminUsers !== 1 ? 's' : ''}
+              </p>
             </CardContent>
           </Card>
 
@@ -447,6 +480,13 @@ export default function AdminDashboard() {
   };
 
   const renderUsersTab = () => {
+    const filteredUsers = users?.filter(user => 
+      user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.firstName && user.firstName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (user.lastName && user.lastName.toLowerCase().includes(searchQuery.toLowerCase()))
+    ) || [];
+
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -456,16 +496,64 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        <div className="flex items-center space-x-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              data-testid="input-search-users"
+            />
+          </div>
+        </div>
+
         <Card>
-          <CardContent className="p-8 text-center">
-            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">User Management</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              User authentication and management features will be implemented in the next phase.
-            </p>
-            <p className="text-sm text-gray-500">
-              This will include customer registration, profiles, and account management.
-            </p>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Joined</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id} data-testid={`row-user-${user.id}`}>
+                      <TableCell className="font-medium">{user.username}</TableCell>
+                      <TableCell>
+                        {user.firstName || user.lastName 
+                          ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
+                          : '-'
+                        }
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.phone || '-'}</TableCell>
+                      <TableCell>
+                        <Badge className={user.isAdmin ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'}>
+                          {user.isAdmin ? 'Admin' : 'Customer'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {formatDate(user.createdAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      {users?.length === 0 ? 'No users found' : 'No users match your search'}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

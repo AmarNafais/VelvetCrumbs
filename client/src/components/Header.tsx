@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
-import { ShoppingCart, Menu, Search, X } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { ShoppingCart, Menu, Search, X, User, LogIn, UserPlus, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import CategoryDropdown from "./CategoryDropdown";
 import CartSidebar from "./CartSidebar";
 
@@ -12,6 +14,7 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { cartCount, isCartOpen, setIsCartOpen } = useCart();
+  const { user, logoutMutation } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +66,56 @@ export default function Header() {
                   data-testid="input-search"
                 />
               </form>
+
+              {/* Authentication Buttons */}
+              {user ? (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-2"
+                    onClick={() => setLocation("/profile")}
+                    data-testid="button-profile"
+                  >
+                    <User className="h-5 w-5" />
+                    <span className="hidden md:inline ml-1">{user.firstName || user.username}</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-2"
+                    onClick={() => logoutMutation.mutate()}
+                    disabled={logoutMutation.isPending}
+                    data-testid="button-logout"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span className="hidden md:inline ml-1">Logout</span>
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-2"
+                    onClick={() => setLocation("/auth")}
+                    data-testid="button-login"
+                  >
+                    <LogIn className="h-5 w-5" />
+                    <span className="hidden md:inline ml-1">Login</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="p-2"
+                    onClick={() => setLocation("/auth")}
+                    data-testid="button-signup"
+                  >
+                    <UserPlus className="h-5 w-5" />
+                    <span className="hidden md:inline ml-1">Sign Up</span>
+                  </Button>
+                </div>
+              )}
 
               {/* Cart Button */}
               <Button

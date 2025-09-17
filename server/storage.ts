@@ -1,11 +1,13 @@
 import { 
-  type Category, type Product, type CartItem, type ProductImage, type AddOn, type ProductAddOn, type Order, type OrderItem, type OrderItemAddOn,
-  type InsertCategory, type InsertProduct, type InsertCartItem, type InsertProductImage, type InsertAddOn, type InsertProductAddOn, type InsertOrder, type InsertOrderItem, type InsertOrderItemAddOn,
+  type Category, type Product, type CartItem, type ProductImage, type AddOn, type ProductAddOn, type Order, type OrderItem, type OrderItemAddOn, type User,
+  type InsertCategory, type InsertProduct, type InsertCartItem, type InsertProductImage, type InsertAddOn, type InsertProductAddOn, type InsertOrder, type InsertOrderItem, type InsertOrderItemAddOn, type InsertUser, type UpdateUserProfile,
   type ProductWithCategory, type CartItemWithProduct, type ProductWithImages, type ProductWithAddOns, type OrderWithItems,
-  categories, products, cartItems, productImages, addOns, productAddOns, orders, orderItems, orderItemAddOns 
+  categories, products, cartItems, productImages, addOns, productAddOns, orders, orderItems, orderItemAddOns, users 
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, ilike, or, desc } from "drizzle-orm";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
 
 export interface IStorage {
   // Categories
@@ -58,10 +60,44 @@ export interface IStorage {
   updateCartItemQuantity(id: string, quantity: number): Promise<CartItem | undefined>;
   removeFromCart(id: string): Promise<boolean>;
   clearCart(sessionId: string): Promise<void>;
+
+  // Users
+  getUsers(): Promise<User[]>;
+  getUserById(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUserProfile(id: string, profile: UpdateUserProfile): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
+
+  // Session store for authentication
+  sessionStore: any;
 }
 
 export class DatabaseStorage implements IStorage {
+  public sessionStore: session.Store;
+
   constructor() {
+    // Initialize session store with proper fallback
+    if (process.env.DATABASE_URL) {
+      // Use PostgreSQL session store in production/development with database
+      const PostgresSessionStore = connectPg(session);
+      this.sessionStore = new PostgresSessionStore({
+        conString: process.env.DATABASE_URL,
+        createTableIfMissing: true,
+        errorLog: (error: Error) => {
+          console.error('Session store error:', error);
+        },
+      });
+    } else {
+      // Fallback to MemoryStore for development without database
+      console.warn('DATABASE_URL not found, using MemoryStore for sessions (not suitable for production)');
+      const MemoryStore = require('memorystore')(session);
+      this.sessionStore = new MemoryStore({
+        checkPeriod: 86400000, // Prune expired entries every 24h
+      });
+    }
+    
     this.initializeData().catch(console.error);
   }
 
@@ -572,6 +608,45 @@ export class DatabaseStorage implements IStorage {
 
   async clearCart(sessionId: string): Promise<void> {
     await db.delete(cartItems).where(eq(cartItems.sessionId, sessionId));
+  }
+
+  // User methods
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(userData).returning();
+    return newUser;
+  }
+
+  async updateUserProfile(id: string, profile: UpdateUserProfile): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ ...profile, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return (result.rowCount || 0) > 0;
   }
 }
 
