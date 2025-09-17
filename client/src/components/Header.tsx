@@ -45,9 +45,9 @@ export default function Header() {
               <Link href="/about" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-about">
                 About Us
               </Link>
-              <Link href="/products" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-services">
-                Services
-              </Link>
+              <div className="font-medium">
+                <CategoryDropdown />
+              </div>
               <Link href="/products?featured=true" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-featured">
                 Featured
               </Link>
@@ -161,9 +161,9 @@ export default function Header() {
                 href="/products"
                 className="block text-foreground hover:text-primary transition-colors font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
-                data-testid="link-services-mobile"
+                data-testid="link-categories-mobile"
               >
-                Services
+                Categories
               </Link>
               <Link
                 href="/products?featured=true"
