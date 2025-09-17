@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "wouter";
 import { ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -17,17 +17,35 @@ const iconMap: Record<string, string> = {
 
 export default function CategoryDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setIsOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+    }, 150); // 150ms delay before hiding
+  };
+
   return (
-    <div className="relative group" data-testid="dropdown-categories">
+    <div 
+      className="relative group" 
+      data-testid="dropdown-categories"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <button
         className="flex items-center text-foreground hover:text-primary transition-colors"
-        onMouseEnter={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
         data-testid="button-categories"
       >
         Categories
@@ -36,9 +54,7 @@ export default function CategoryDropdown() {
 
       {isOpen && (
         <div
-          className="absolute top-full left-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg z-50"
-          onMouseEnter={() => setIsOpen(true)}
-          onMouseLeave={() => setIsOpen(false)}
+          className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-lg shadow-lg z-50"
           data-testid="menu-categories"
         >
           <div className="p-4 grid grid-cols-2 gap-2">
