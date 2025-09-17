@@ -127,7 +127,7 @@ export default function AdminDashboard() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !adminStatus?.isAdmin) {
-      setLocation("/admin");
+      setLocation("/auth");
     }
   }, [adminStatus, isLoading, setLocation]);
 
@@ -137,11 +137,13 @@ export default function AdminDashboard() {
       return await response.json();
     },
     onSuccess: () => {
+      // Clear all cached data
+      queryClient.clear();
       toast({
         title: "Logged Out",
         description: "You have been successfully logged out.",
       });
-      setLocation("/admin");
+      setLocation("/auth");
     },
     onError: (error: any) => {
       toast({
