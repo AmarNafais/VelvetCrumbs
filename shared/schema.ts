@@ -6,6 +6,25 @@ import { z } from "zod";
 // Order status enum for data integrity
 export const orderStatusEnum = pgEnum('order_status', ['placed', 'in_progress', 'delivered', 'completed', 'canceled']);
 
+// Users table for authentication and profile management
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  phone: text("phone"),
+  address: text("address"),
+  dateOfBirth: text("date_of_birth"), // Store as text for simplicity (YYYY-MM-DD format)
+  isAdmin: boolean("is_admin").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  usernameIdx: index("users_username_idx").on(table.username),
+  emailIdx: index("users_email_idx").on(table.email),
+}));
+
 export const categories = pgTable("categories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
@@ -160,8 +179,16 @@ export const productAddOnsRelations = relations(productAddOns, ({ one }) => ({
   }),
 }));
 
-export const ordersRelations = relations(orders, ({ many }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
+  orders: many(orders),
+}));
+
+export const ordersRelations = relations(orders, ({ one, many }) => ({
   items: many(orderItems),
+  user: one(users, {
+    fields: [orders.customerEmail],
+    references: [users.email],
+  }),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one, many }) => ({
@@ -231,6 +258,25 @@ export const insertOrderItemAddOnSchema = createInsertSchema(orderItemAddOns).om
   createdAt: true,
 });
 
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// User login schema (subset of user data)
+export const loginUserSchema = insertUserSchema.pick({
+  username: true,
+  password: true,
+});
+
+// User profile update schema (excludes sensitive fields)
+export const updateUserProfileSchema = insertUserSchema.omit({
+  username: true,
+  password: true,
+  isAdmin: true,
+});
+
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Category = typeof categories.$inferSelect;
 
@@ -257,6 +303,11 @@ export type OrderItem = typeof orderItems.$inferSelect;
 
 export type InsertOrderItemAddOn = z.infer<typeof insertOrderItemAddOnSchema>;
 export type OrderItemAddOn = typeof orderItemAddOns.$inferSelect;
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+export type LoginUser = z.infer<typeof loginUserSchema>;
+export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 
 // Extended types for frontend
 export type ProductWithCategory = Product & { category: Category };
