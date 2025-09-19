@@ -83,6 +83,7 @@ export interface IStorage {
   isProductInWishlist(userId: string, productId: string): Promise<boolean>;
 
   // Reviews
+  getRandomReviews(limit?: number): Promise<ReviewWithUser[]>;
   getProductReviews(productId: string): Promise<ReviewWithUser[]>;
   getUserReviews(userId: string): Promise<Review[]>;
   createReview(review: InsertReview): Promise<Review>;
@@ -648,16 +649,21 @@ export class DatabaseStorage implements IStorage {
 
   // Cart
   async getCartItems(userId?: string, sessionId?: string): Promise<CartItemWithProduct[]> {
+    console.log('getCartItems called with userId:', userId, 'sessionId:', sessionId);
+    
     let whereCondition;
     
     if (userId) {
       whereCondition = eq(cartItems.userId, userId);
+      console.log('Using userId condition');
     } else if (sessionId) {
       whereCondition = and(
         eq(cartItems.sessionId, sessionId),
         sql`${cartItems.userId} IS NULL`
       );
+      console.log('Using sessionId condition');
     } else {
+      console.log('No userId or sessionId provided, returning empty array');
       return [];
     }
 
@@ -675,10 +681,16 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(products, eq(cartItems.productId, products.id))
       .where(whereCondition);
 
-    return result.filter(item => item.product !== null) as CartItemWithProduct[];
+    console.log('Database query result:', result.length, 'items');
+    const filteredResult = result.filter(item => item.product !== null) as CartItemWithProduct[];
+    console.log('Filtered result:', filteredResult.length, 'items');
+    
+    return filteredResult;
   }
 
   async addToCart(cartItemData: InsertCartItem): Promise<CartItem> {
+    console.log('addToCart called with data:', cartItemData);
+    
     // Build condition to check for existing item
     let existingItemCondition;
     
@@ -687,13 +699,16 @@ export class DatabaseStorage implements IStorage {
         eq(cartItems.productId, cartItemData.productId),
         eq(cartItems.userId, cartItemData.userId)
       );
+      console.log('Checking for existing item with userId');
     } else if (cartItemData.sessionId) {
       existingItemCondition = and(
         eq(cartItems.productId, cartItemData.productId),
         sql`${cartItems.sessionId} = ${cartItemData.sessionId}`,
         sql`${cartItems.userId} IS NULL`
       );
+      console.log('Checking for existing item with sessionId');
     } else {
+      console.log('No userId or sessionId in cart item data');
       throw new Error('Either userId or sessionId must be provided');
     }
 
@@ -703,6 +718,8 @@ export class DatabaseStorage implements IStorage {
       .from(cartItems)
       .where(existingItemCondition);
 
+    console.log('Existing item found:', existingItem ? 'yes' : 'no');
+
     if (existingItem) {
       // Update quantity if item exists
       const [updatedItem] = await db
@@ -710,10 +727,12 @@ export class DatabaseStorage implements IStorage {
         .set({ quantity: existingItem.quantity + (cartItemData.quantity || 1) })
         .where(eq(cartItems.id, existingItem.id))
         .returning();
+      console.log('Updated existing item:', updatedItem);
       return updatedItem;
     } else {
       // Create new cart item
       const [newItem] = await db.insert(cartItems).values(cartItemData).returning();
+      console.log('Created new item:', newItem);
       return newItem;
     }
   }
@@ -847,6 +866,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Review methods
+  async getRandomReviews(limit: number = 2): Promise<ReviewWithUser[]> {
+    const result = await db
+      .select({
+        review: reviews,
+        user: users
+      })
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .where(sql`${reviews.reviewText} IS NOT NULL AND ${reviews.reviewText} != ''`)
+      .orderBy(sql`RANDOM()`)
+      .limit(limit);
+
+    return result.filter(item => item.user !== null).map(item => ({
+      ...item.review,
+      user: item.user!
+    }));
+  }
+
   async getProductReviews(productId: string): Promise<ReviewWithUser[]> {
     const result = await db
       .select({

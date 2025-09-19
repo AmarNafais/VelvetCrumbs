@@ -21,10 +21,10 @@ export default function ProductCategories() {
   if (isLoading) {
     return (
       <section className="py-20 bg-background" data-testid="categories-loading">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="container mx-auto px-4 w-full max-w-7xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 w-full">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-card rounded-xl p-8 animate-pulse" data-testid={`category-skeleton-${i}`}>
+              <div key={i} className="bg-card rounded-xl p-6 sm:p-8 animate-pulse w-full" data-testid={`category-skeleton-${i}`}>
                 <div className="w-16 h-16 bg-muted rounded-full mx-auto mb-4" />
                 <div className="h-4 bg-muted rounded mb-2" />
                 <div className="h-3 bg-muted rounded mb-4" />
@@ -39,7 +39,7 @@ export default function ProductCategories() {
 
   return (
     <section className="py-20 bg-background" data-testid="categories-section">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 w-full max-w-7xl">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-foreground mb-4" data-testid="categories-title">
             Our Product Categories
@@ -49,12 +49,12 @@ export default function ProductCategories() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 w-full">
           {categories.map((category, index) => (
             <Link
               key={category.id}
               href={`/products/${category.slug}`}
-              className="bg-card rounded-xl p-8 text-center hover:shadow-lg transition-all duration-300 group cursor-pointer border border-border"
+              className="bg-card rounded-xl p-6 sm:p-8 text-center hover:shadow-lg transition-all duration-300 group cursor-pointer border border-border w-full"
               data-testid={`category-${category.slug}`}
             >
               <div className={`w-16 h-16 ${index % 2 === 0 ? 'bg-primary/10 group-hover:bg-primary/20' : 'bg-accent/10 group-hover:bg-accent/20'} rounded-full flex items-center justify-center mx-auto mb-4 transition-colors`}>

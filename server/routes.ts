@@ -26,6 +26,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up user authentication system
   setupAuth(app);
 
+  // Middleware to ensure session is initialized for all requests
+  app.use((req, res, next) => {
+    // Touch the session to ensure it's created for guest users
+    if (req.session) {
+      req.session.touch();
+    }
+    next();
+  });
+
   // Admin status endpoint - now uses proper authentication
   app.get("/api/admin/status", async (req, res) => {
     try {
@@ -453,9 +462,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cart", async (req, res) => {
     try {
       const userId = req.user?.id;
-      const sessionId = req.query.sessionId as string || "guest";
+      const sessionId = req.sessionID;
+      
+      console.log('GET /api/cart - userId:', userId, 'sessionId:', sessionId);
       
       const cartItems = await storage.getCartItems(userId, sessionId);
+      console.log('Cart items found:', cartItems.length);
+      
       res.json(cartItems);
     } catch (error: any) {
       res.status(500).json({ message: "Error fetching cart: " + error.message });
@@ -465,7 +478,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/cart", async (req, res) => {
     try {
       const userId = req.user?.id;
-      const sessionId = req.sessionID || "guest";
+      const sessionId = req.sessionID;
+      
+      console.log('POST /api/cart - userId:', userId, 'sessionId:', sessionId);
+      console.log('Request body:', req.body);
       
       // Prepare cart item data with proper user/session association
       const cartItemData = {
@@ -474,8 +490,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionId: userId ? null : sessionId, // Only use sessionId for guest users
       };
       
+      console.log('Cart item data to save:', cartItemData);
+      
       const validatedData = insertCartItemSchema.parse(cartItemData);
       const cartItem = await storage.addToCart(validatedData);
+      
+      console.log('Cart item saved:', cartItem);
+      
       res.status(201).json(cartItem);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -521,7 +542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/cart", async (req, res) => {
     try {
       const userId = req.user?.id;
-      const sessionId = req.query.sessionId as string || "guest";
+      const sessionId = req.sessionID;
       
       await storage.clearCart(userId, sessionId);
       res.status(204).send();
@@ -647,6 +668,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Review Routes
+  // Get random reviews for homepage
+  app.get("/api/reviews/random", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 2;
+      const reviews = await storage.getRandomReviews(limit);
+      res.json(reviews);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching random reviews: " + error.message });
+    }
+  });
+
   // Get reviews for a product
   app.get("/api/products/:productId/reviews", async (req, res) => {
     try {

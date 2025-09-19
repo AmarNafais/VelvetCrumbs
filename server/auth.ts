@@ -39,7 +39,7 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true, // Allow sessions for guest users
     store: storage.sessionStore,
     cookie: {
       secure: process.env.NODE_ENV === "production",

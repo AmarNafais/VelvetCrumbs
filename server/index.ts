@@ -1,6 +1,5 @@
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
-import session from "express-session";
-import connectPgSimple from "connect-pg-simple";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
@@ -8,28 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Session management setup
-const pgSession = connectPgSimple(session);
-
-if (!process.env.SESSION_SECRET) {
-  throw new Error("SESSION_SECRET environment variable is required");
-}
-
-app.use(session({
-  store: new pgSession({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true,
-  }),
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    httpOnly: true,
-  }
-}));
+// Session management is now handled in auth.ts
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -86,11 +64,12 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  
   server.listen({
     port,
-    host: "0.0.0.0",
-    reusePort: true,
+    host,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`serving on ${host}:${port}`);
   });
 })();
