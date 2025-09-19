@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { ArrowLeft, ShoppingCart, Eye } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Eye, Trash2 } from "lucide-react";
 import { Order as BaseOrder, OrderItem as BaseOrderItem, Product } from "@shared/schema";
 
 // Define interface matching the API response structure
@@ -88,8 +88,39 @@ export default function AdminOrders() {
     },
   });
 
+  // Delete order mutation
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest('DELETE', `/api/admin/orders/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to delete order');
+      }
+      return;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Order deleted successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete order.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleStatusChange = (orderId: string, newStatus: string) => {
     updateStatusMutation.mutate({ id: orderId, status: newStatus });
+  };
+
+  const handleDeleteOrder = (orderId: string, customerName: string) => {
+    if (window.confirm(`Are you sure you want to delete the order for ${customerName}? This action cannot be undone.`)) {
+      deleteOrderMutation.mutate(orderId);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -259,6 +290,16 @@ export default function AdminOrders() {
                                   <SelectItem value="canceled">Canceled</SelectItem>
                                 </SelectContent>
                               </Select>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteOrder(order.id, order.customerName)}
+                                disabled={deleteOrderMutation.isPending}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                data-testid={`button-delete-order-${order.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>

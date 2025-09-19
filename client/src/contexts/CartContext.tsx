@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 import type { CartItemWithProduct, InsertCartItem } from "@shared/schema";
 
 interface CartContextType {
@@ -27,14 +28,14 @@ export function useCart() {
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [sessionId] = useState("guest");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: cartItems = [], isLoading } = useQuery({
-    queryKey: ["/api/cart", sessionId],
+    queryKey: ["/api/cart", user?.id || "guest"],
     queryFn: () =>
-      apiRequest("GET", `/api/cart?sessionId=${sessionId}`)
+      apiRequest("GET", "/api/cart")
         .then((res) => res.json()),
   });
 
@@ -62,7 +63,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   });
 
   const clearCartMutation = useMutation({
-    mutationFn: () => apiRequest("DELETE", `/api/cart?sessionId=${sessionId}`),
+    mutationFn: () => apiRequest("DELETE", "/api/cart"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
     },
@@ -76,7 +77,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     addToCartMutation.mutate({
       productId,
       quantity,
-      sessionId,
     });
     setIsCartOpen(true);
   };

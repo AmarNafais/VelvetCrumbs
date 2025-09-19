@@ -48,7 +48,7 @@ export default function CategoryDropdown() {
         className="flex items-center text-foreground hover:text-primary transition-colors"
         data-testid="button-categories"
       >
-        Categories
+        categories
         <ChevronDown className="ml-1 h-4 w-4" />
       </button>
 

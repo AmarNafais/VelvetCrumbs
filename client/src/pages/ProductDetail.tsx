@@ -5,9 +5,13 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { Star, ShoppingCart, Heart, ArrowLeft, Plus, Minus } from "lucide-react";
+import RatingDisplay from "@/components/RatingDisplay";
+import ReviewForm from "@/components/ReviewForm";
+import ReviewsList from "@/components/ReviewsList";
 import type { Product } from "@shared/schema";
 
 export default function ProductDetail() {
@@ -128,16 +132,9 @@ export default function ProductDetail() {
                 
                 {/* Rating */}
                 <div className="flex items-center mb-4">
-                  <div className="flex items-center text-yellow-400 mr-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-4 w-4 ${i < Math.floor(rating) ? 'fill-current' : ''}`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-muted-foreground" data-testid="product-detail-rating">
-                    ({rating}) • {product.inStock ? "In Stock" : "Out of Stock"}
+                  <RatingDisplay productId={product.id} size="md" className="mr-4" />
+                  <span className="text-muted-foreground" data-testid="product-detail-stock">
+                    {product.inStock ? "In Stock" : "Out of Stock"}
                   </span>
                 </div>
 
@@ -253,6 +250,31 @@ export default function ProductDetail() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Reviews Section */}
+          <div className="mt-16">
+            <Tabs defaultValue="reviews" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="reviews" data-testid="tab-reviews">Reviews</TabsTrigger>
+                <TabsTrigger value="write-review" data-testid="tab-write-review">Write a Review</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="reviews" className="mt-6">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-2xl font-semibold mb-4">Customer Reviews</h3>
+                    <ReviewsList productId={product.id} />
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="write-review" className="mt-6">
+                <div className="max-w-2xl">
+                  <ReviewForm productId={product.id} />
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>

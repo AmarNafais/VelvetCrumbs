@@ -1,11 +1,11 @@
 import { 
-  type Category, type Product, type CartItem, type ProductImage, type AddOn, type ProductAddOn, type Order, type OrderItem, type OrderItemAddOn, type User,
-  type InsertCategory, type InsertProduct, type InsertCartItem, type InsertProductImage, type InsertAddOn, type InsertProductAddOn, type InsertOrder, type InsertOrderItem, type InsertOrderItemAddOn, type InsertUser, type UpdateUserProfile,
-  type ProductWithCategory, type CartItemWithProduct, type ProductWithImages, type ProductWithAddOns, type OrderWithItems,
-  categories, products, cartItems, productImages, addOns, productAddOns, orders, orderItems, orderItemAddOns, users 
+  type Category, type Product, type CartItem, type ProductImage, type AddOn, type ProductAddOn, type Order, type OrderItem, type OrderItemAddOn, type User, type Wishlist, type Review,
+  type InsertCategory, type InsertProduct, type InsertCartItem, type InsertProductImage, type InsertAddOn, type InsertProductAddOn, type InsertOrder, type InsertOrderItem, type InsertOrderItemAddOn, type InsertUser, type UpdateUserProfile, type InsertWishlist, type InsertReview,
+  type ProductWithCategory, type CartItemWithProduct, type ProductWithImages, type ProductWithAddOns, type OrderWithItems, type WishlistWithProduct, type ReviewWithUser,
+  categories, products, cartItems, productImages, addOns, productAddOns, orders, orderItems, orderItemAddOns, users, wishlists, reviews 
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, ilike, or, desc } from "drizzle-orm";
+import { eq, and, ilike, or, desc, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -57,13 +57,15 @@ export interface IStorage {
   createOrder(order: InsertOrder, items: Omit<InsertOrderItem, 'orderId'>[]): Promise<OrderWithItems>;
   getOrderWithProducts(orderId: string): Promise<OrderWithItems | null>;
   updateOrderStatus(id: string, status: 'placed' | 'in_progress' | 'delivered' | 'completed' | 'canceled'): Promise<Order | undefined>;
+  deleteOrder(id: string): Promise<boolean>;
 
   // Cart
-  getCartItems(sessionId: string): Promise<CartItemWithProduct[]>;
+  getCartItems(userId?: string, sessionId?: string): Promise<CartItemWithProduct[]>;
   addToCart(cartItem: InsertCartItem): Promise<CartItem>;
   updateCartItemQuantity(id: string, quantity: number): Promise<CartItem | undefined>;
   removeFromCart(id: string): Promise<boolean>;
-  clearCart(sessionId: string): Promise<void>;
+  clearCart(userId?: string, sessionId?: string): Promise<void>;
+  transferCartToUser(sessionId: string, userId: string): Promise<void>;
 
   // Users
   getUsers(): Promise<User[]>;
@@ -73,6 +75,21 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserProfile(id: string, profile: UpdateUserProfile): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
+
+  // Wishlist
+  getUserWishlists(userId: string): Promise<WishlistWithProduct[]>;
+  addToWishlist(userId: string, productId: string): Promise<Wishlist>;
+  removeFromWishlist(userId: string, productId: string): Promise<boolean>;
+  isProductInWishlist(userId: string, productId: string): Promise<boolean>;
+
+  // Reviews
+  getProductReviews(productId: string): Promise<ReviewWithUser[]>;
+  getUserReviews(userId: string): Promise<Review[]>;
+  createReview(review: InsertReview): Promise<Review>;
+  updateReview(id: string, review: Partial<InsertReview>): Promise<Review | undefined>;
+  deleteReview(id: string): Promise<boolean>;
+  getUserReviewForProduct(userId: string, productId: string): Promise<Review | undefined>;
+  getProductRatingStats(productId: string): Promise<{ averageRating: number; totalReviews: number }>;
 
   // Session store for authentication
   sessionStore: any;
@@ -604,35 +621,87 @@ export class DatabaseStorage implements IStorage {
     return order || undefined;
   }
 
+  async deleteOrder(id: string): Promise<boolean> {
+    try {
+      return await db.transaction(async (tx) => {
+        // First get all order items for this order
+        const orderItemsData = await tx.select().from(orderItems).where(eq(orderItems.orderId, id));
+        
+        // Delete order item add-ons for each order item
+        for (const orderItem of orderItemsData) {
+          await tx.delete(orderItemAddOns).where(eq(orderItemAddOns.orderItemId, orderItem.id));
+        }
+        
+        // Delete order items
+        await tx.delete(orderItems).where(eq(orderItems.orderId, id));
+        
+        // Delete the order itself
+        const deletedOrder = await tx.delete(orders).where(eq(orders.id, id)).returning();
+        
+        return deletedOrder.length > 0;
+      });
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      return false;
+    }
+  }
+
   // Cart
-  async getCartItems(sessionId: string): Promise<CartItemWithProduct[]> {
+  async getCartItems(userId?: string, sessionId?: string): Promise<CartItemWithProduct[]> {
+    let whereCondition;
+    
+    if (userId) {
+      whereCondition = eq(cartItems.userId, userId);
+    } else if (sessionId) {
+      whereCondition = and(
+        eq(cartItems.sessionId, sessionId),
+        sql`${cartItems.userId} IS NULL`
+      );
+    } else {
+      return [];
+    }
+
     const result = await db
       .select({
         id: cartItems.id,
         productId: cartItems.productId,
         quantity: cartItems.quantity,
+        userId: cartItems.userId,
         sessionId: cartItems.sessionId,
         createdAt: cartItems.createdAt,
         product: products,
       })
       .from(cartItems)
       .leftJoin(products, eq(cartItems.productId, products.id))
-      .where(eq(cartItems.sessionId, sessionId));
+      .where(whereCondition);
 
     return result.filter(item => item.product !== null) as CartItemWithProduct[];
   }
 
   async addToCart(cartItemData: InsertCartItem): Promise<CartItem> {
+    // Build condition to check for existing item
+    let existingItemCondition;
+    
+    if (cartItemData.userId) {
+      existingItemCondition = and(
+        eq(cartItems.productId, cartItemData.productId),
+        eq(cartItems.userId, cartItemData.userId)
+      );
+    } else if (cartItemData.sessionId) {
+      existingItemCondition = and(
+        eq(cartItems.productId, cartItemData.productId),
+        sql`${cartItems.sessionId} = ${cartItemData.sessionId}`,
+        sql`${cartItems.userId} IS NULL`
+      );
+    } else {
+      throw new Error('Either userId or sessionId must be provided');
+    }
+
     // Check if item already exists in cart
     const [existingItem] = await db
       .select()
       .from(cartItems)
-      .where(
-        and(
-          eq(cartItems.productId, cartItemData.productId),
-          eq(cartItems.sessionId, cartItemData.sessionId)
-        )
-      );
+      .where(existingItemCondition);
 
     if (existingItem) {
       // Update quantity if item exists
@@ -669,8 +738,34 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount || 0) > 0;
   }
 
-  async clearCart(sessionId: string): Promise<void> {
-    await db.delete(cartItems).where(eq(cartItems.sessionId, sessionId));
+  async clearCart(userId?: string, sessionId?: string): Promise<void> {
+    let whereCondition;
+    
+    if (userId) {
+      whereCondition = eq(cartItems.userId, userId);
+    } else if (sessionId) {
+      whereCondition = and(
+        sql`${cartItems.sessionId} = ${sessionId}`,
+        sql`${cartItems.userId} IS NULL`
+      );
+    } else {
+      throw new Error('Either userId or sessionId must be provided');
+    }
+
+    await db.delete(cartItems).where(whereCondition);
+  }
+
+  async transferCartToUser(sessionId: string, userId: string): Promise<void> {
+    // Update all guest cart items to belong to the user
+    await db
+      .update(cartItems)
+      .set({ userId: userId, sessionId: null })
+      .where(
+        and(
+          sql`${cartItems.sessionId} = ${sessionId}`,
+          sql`${cartItems.userId} IS NULL`
+        )
+      );
   }
 
   // User methods
@@ -710,6 +805,111 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(id: string): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
     return (result.rowCount || 0) > 0;
+  }
+
+  // Wishlist methods
+  async getUserWishlists(userId: string): Promise<WishlistWithProduct[]> {
+    const result = await db
+      .select({
+        wishlist: wishlists,
+        product: products
+      })
+      .from(wishlists)
+      .leftJoin(products, eq(wishlists.productId, products.id))
+      .where(eq(wishlists.userId, userId))
+      .orderBy(desc(wishlists.createdAt));
+
+    return result.filter(item => item.product !== null).map(item => ({
+      ...item.wishlist,
+      product: item.product!
+    }));
+  }
+
+  async addToWishlist(userId: string, productId: string): Promise<Wishlist> {
+    const [wishlist] = await db.insert(wishlists).values({ userId, productId }).returning();
+    return wishlist;
+  }
+
+  async removeFromWishlist(userId: string, productId: string): Promise<boolean> {
+    const result = await db
+      .delete(wishlists)
+      .where(and(eq(wishlists.userId, userId), eq(wishlists.productId, productId)));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async isProductInWishlist(userId: string, productId: string): Promise<boolean> {
+    const [wishlist] = await db
+      .select()
+      .from(wishlists)
+      .where(and(eq(wishlists.userId, userId), eq(wishlists.productId, productId)))
+      .limit(1);
+    return !!wishlist;
+  }
+
+  // Review methods
+  async getProductReviews(productId: string): Promise<ReviewWithUser[]> {
+    const result = await db
+      .select({
+        review: reviews,
+        user: users
+      })
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .where(eq(reviews.productId, productId))
+      .orderBy(desc(reviews.createdAt));
+
+    return result.filter(item => item.user !== null).map(item => ({
+      ...item.review,
+      user: item.user!
+    }));
+  }
+
+  async getUserReviews(userId: string): Promise<Review[]> {
+    return await db.select().from(reviews).where(eq(reviews.userId, userId)).orderBy(desc(reviews.createdAt));
+  }
+
+  async createReview(reviewData: InsertReview): Promise<Review> {
+    const [review] = await db.insert(reviews).values(reviewData).returning();
+    return review;
+  }
+
+  async updateReview(id: string, reviewData: Partial<InsertReview>): Promise<Review | undefined> {
+    const [review] = await db
+      .update(reviews)
+      .set({ ...reviewData, updatedAt: new Date() })
+      .where(eq(reviews.id, id))
+      .returning();
+    return review || undefined;
+  }
+
+  async deleteReview(id: string): Promise<boolean> {
+    const result = await db.delete(reviews).where(eq(reviews.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getUserReviewForProduct(userId: string, productId: string): Promise<Review | undefined> {
+    const [review] = await db
+      .select()
+      .from(reviews)
+      .where(and(eq(reviews.userId, userId), eq(reviews.productId, productId)))
+      .limit(1);
+    return review || undefined;
+  }
+
+  async getProductRatingStats(productId: string): Promise<{ averageRating: number; totalReviews: number }> {
+    const result = await db
+      .select({
+        avg: sql<number>`COALESCE(AVG(${reviews.rating}), 0)`,
+        count: sql<number>`COUNT(${reviews.rating})`
+      })
+      .from(reviews)
+      .where(eq(reviews.productId, productId));
+
+    const { avg, count } = result[0];
+    return {
+      averageRating: Math.round(avg * 10) / 10, // Round to 1 decimal place
+      totalReviews: count
+    };
   }
 }
 

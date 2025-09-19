@@ -1,7 +1,6 @@
 const { execSync } = require('child_process');
 const path = require('path');
 
-// Change to functions directory
 process.chdir(path.join(__dirname));
 
 try {

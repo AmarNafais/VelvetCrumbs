@@ -5,8 +5,8 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",
-  "dev": "tsc --watch"
-    
+    "dev": "tsc --watch",
+    "start": "npm run shell"
   },
   "engines": {
     "node": "20"

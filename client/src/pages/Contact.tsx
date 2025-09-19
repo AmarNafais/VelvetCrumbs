@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Phone, Mail, MapPin, Clock, MessageSquare, Calendar, Facebook, Instagram } from "lucide-react";
 
 export default function Contact() {
@@ -40,26 +41,76 @@ export default function Contact() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Basic client-side validation
+    if (!formData.name.trim()) {
+      toast({
+        title: "Name required",
+        description: "Please enter your name.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
-    toast({
-      title: "Message sent successfully!",
-      description: "We'll get back to you within 24 hours to discuss your order.",
-    });
+    if (!formData.email.trim()) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
-    // Reset form
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      eventType: "",
-      eventDate: "",
-      guestCount: "",
-      message: ""
-    });
-    
-    setIsSubmitting(false);
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // Submit form data to API
+      const response = await apiRequest('POST', '/api/contact', formData);
+      
+      if (!response.ok) {
+        // Handle server errors
+        const errorData = await response.json().catch(() => ({ message: 'Server error occurred' }));
+        throw new Error(errorData.message || `Server error: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: "Message sent successfully!",
+        description: result.message || "We'll get back to you within 24 hours to discuss your order.",
+      });
+
+      // Reset form only on success
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        eventType: "",
+        eventDate: "",
+        guestCount: "",
+        message: ""
+      });
+    } catch (error: any) {
+      console.error('Contact form submission error:', error);
+      toast({
+        title: "Failed to send message",
+        description: error.message || "Please try again later or contact us directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [

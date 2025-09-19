@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { updateUserProfileSchema, UpdateUserProfile } from "@shared/schema";
-import { User, Mail, Phone, MapPin, Calendar, UserCheck, Edit, Save } from "lucide-react";
+import { User, Mail, Phone, MapPin, Calendar, UserCheck, Edit, Save, Home } from "lucide-react";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 
@@ -95,6 +95,16 @@ export default function UserProfile() {
               Manage your personal information and account settings
             </p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation("/")}
+            className="inline-flex items-center"
+            data-testid="button-back-home"
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
           <div className="flex justify-center items-center space-x-4">
             <Badge variant="outline" className="flex items-center space-x-2">
               <UserCheck className="h-4 w-4" />

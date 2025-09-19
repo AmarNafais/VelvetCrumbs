@@ -15,8 +15,6 @@ declare global {
   }
 }
 
-//test
-
 const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string) {
@@ -149,8 +147,18 @@ export function setupAuth(app: Express) {
       const { password: _, ...userWithoutPassword } = user;
 
       // Log in the user automatically
-      req.login(user, (err) => {
+      req.login(user, async (err) => {
         if (err) return next(err);
+        
+        // Transfer guest cart items to user account
+        try {
+          const sessionId = req.sessionID;
+          await storage.transferCartToUser(sessionId, user.id);
+        } catch (transferError) {
+          console.error('Failed to transfer cart items on registration:', transferError);
+          // Continue with registration even if cart transfer fails
+        }
+        
         res.status(201).json(userWithoutPassword);
       });
     } catch (error) {
@@ -179,9 +187,18 @@ export function setupAuth(app: Express) {
           return res.status(401).json({ message: info?.message || "Invalid username or password" });
         }
 
-        req.login(user, (err) => {
+        req.login(user, async (err) => {
           if (err) {
             return next(err);
+          }
+
+          // Transfer guest cart items to user account
+          try {
+            const sessionId = req.sessionID;
+            await storage.transferCartToUser(sessionId, user.id);
+          } catch (transferError) {
+            console.error('Failed to transfer cart items on login:', transferError);
+            // Continue with login even if cart transfer fails
           }
 
           // Remove password from response

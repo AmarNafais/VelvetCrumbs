@@ -24,7 +24,8 @@ import {
   Search,
   Edit,
   Trash2,
-  Filter
+  Filter,
+  Home
 } from "lucide-react";
 
 interface Category {
@@ -725,6 +726,16 @@ export default function AdminDashboard() {
         <div className="p-6 border-b">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Velvet Crumbs</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation("/")}
+            className="w-full mt-4"
+            data-testid="button-back-home"
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
         </div>
         
         <nav className="p-4 space-y-2">

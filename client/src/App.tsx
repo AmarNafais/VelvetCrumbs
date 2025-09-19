@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/hooks/use-auth";
+import { WishlistProvider } from "@/hooks/use-wishlist";
 
 import Home from "@/pages/Home";
 import Products from "@/pages/Products";
@@ -53,9 +54,11 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <AuthProvider>
-          <CartProvider>
-            <Router />
-          </CartProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <Router />
+            </CartProvider>
+          </WishlistProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

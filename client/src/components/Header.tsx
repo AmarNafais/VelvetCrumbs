@@ -2,19 +2,23 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/use-auth";
-import { ShoppingCart, Menu, Search, X, User, LogIn, UserPlus, LogOut } from "lucide-react";
+import { useWishlist } from "@/hooks/use-wishlist";
+import { ShoppingCart, Menu, Search, X, User, LogIn, UserPlus, LogOut, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import CategoryDropdown from "./CategoryDropdown";
 import CartSidebar from "./CartSidebar";
+import WishlistSidebar from "./WishlistSidebar";
 
 export default function Header() {
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const { cartCount, isCartOpen, setIsCartOpen } = useCart();
   const { user, logoutMutation } = useAuth();
+  const { wishlistItems } = useWishlist();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +30,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm" data-testid="header-main">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm" data-testid="header-main">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -39,55 +43,66 @@ export default function Header() {
 
             {/* Main Navigation - Desktop - Centered */}
             <nav className="hidden md:flex items-center justify-center flex-1 space-x-8" data-testid="nav-desktop">
-              <Link href="/" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-home-nav">
-                Home
+              <Link href="/" className="text-foreground hover:text-primary transition-colors font-semibold" data-testid="link-home-nav">
+                home
               </Link>
-              <Link href="/about" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-about">
-                About Us
-              </Link>
-              <div className="font-medium">
+              <div className="font-semibold">
                 <CategoryDropdown />
               </div>
-              <Link href="/products?featured=true" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-featured">
-                Featured
+              <Link href="/about" className="text-foreground hover:text-primary transition-colors font-semibold" data-testid="link-about">
+                about
               </Link>
-              <Link href="/contact" className="text-foreground hover:text-primary transition-colors font-medium" data-testid="link-contact">
-                Contact Me
+              <Link href="/contact" className="text-foreground hover:text-primary transition-colors font-semibold" data-testid="link-contact">
+                contact
               </Link>
+              {user?.isAdmin && (
+                <Link href="/admin/dashboard" className="text-foreground hover:text-primary transition-colors font-semibold" data-testid="link-dashboard">
+                  dashboard
+                </Link>
+              )}
             </nav>
 
             {/* Right Side Icons */}
-            <div className="flex items-center space-x-3">
-              {/* Search Icon */}
+            <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3">
+              {/* Search Icon - Hidden on very small screens */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="p-2"
+                className="hidden xs:flex p-1 sm:p-2"
                 onClick={() => {
                   // Toggle search functionality - for now just navigate to products
                   setLocation('/products');
                 }}
                 data-testid="button-search"
               >
-                <Search className="h-5 w-5" />
+                <Search className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
 
               {/* Authentication & Cart */}
               {user ? (
                 <>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="p-2"
+                    className="hidden sm:flex px-2 sm:px-4 py-1 sm:py-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground text-xs sm:text-sm"
                     onClick={() => setLocation("/profile")}
-                    data-testid="button-profile"
+                    data-testid="button-account"
                   >
-                    <User className="h-5 w-5" />
+                    account
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="p-2"
+                    className="sm:hidden p-1"
+                    onClick={() => setLocation("/profile")}
+                    data-testid="button-account-mobile"
+                  >
+                    <User className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hidden sm:flex p-2"
                     onClick={() => logoutMutation.mutate()}
                     disabled={logoutMutation.isPending}
                     data-testid="button-logout"
@@ -96,14 +111,52 @@ export default function Header() {
                   </Button>
                 </>
               ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hidden sm:flex px-2 sm:px-4 py-1 sm:py-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground text-xs sm:text-sm"
+                    onClick={() => setLocation("/auth")}
+                    data-testid="button-account"
+                  >
+                    account
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="sm:hidden p-1"
+                    onClick={() => setLocation("/auth")}
+                    data-testid="button-account-mobile"
+                  >
+                    <LogIn className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="hidden xs:flex px-2 sm:px-4 py-1 sm:py-2 bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm"
+                    onClick={() => setLocation("/auth?mode=register")}
+                    data-testid="button-register"
+                  >
+                    register
+                  </Button>
+                </>
+              )}
+
+              {/* Wishlist Button - Only for logged users */}
+              {user && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="p-2"
-                  onClick={() => setLocation("/auth")}
-                  data-testid="button-login"
+                  className="relative p-1 sm:p-2"
+                  onClick={() => setIsWishlistOpen(true)}
+                  data-testid="button-wishlist"
                 >
-                  <LogIn className="h-5 w-5" />
+                  <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+                  {wishlistItems && wishlistItems.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center" data-testid="text-wishlist-count">
+                      {wishlistItems.length}
+                    </span>
+                  )}
                 </Button>
               )}
 
@@ -111,13 +164,13 @@ export default function Header() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="relative p-2"
+                className="relative p-1 sm:p-2"
                 onClick={() => setIsCartOpen(true)}
                 data-testid="button-cart"
               >
-                <ShoppingCart className="h-5 w-5" />
+                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center" data-testid="text-cart-count">
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center" data-testid="text-cart-count">
                     {cartCount}
                   </span>
                 )}
@@ -127,11 +180,11 @@ export default function Header() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="md:hidden p-2"
+                className="md:hidden p-1 sm:p-2"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 data-testid="button-mobile-menu"
               >
-                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {isMobileMenuOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
               </Button>
             </div>
           </div>
@@ -143,44 +196,64 @@ export default function Header() {
             <nav className="p-4 space-y-4">
               <Link
                 href="/"
-                className="block text-foreground hover:text-primary transition-colors font-medium"
+                className="block text-foreground hover:text-primary transition-colors font-semibold"
                 onClick={() => setIsMobileMenuOpen(false)}
                 data-testid="link-home-mobile"
               >
-                Home
-              </Link>
-              <Link
-                href="/about"
-                className="block text-foreground hover:text-primary transition-colors font-medium"
-                onClick={() => setIsMobileMenuOpen(false)}
-                data-testid="link-about-mobile"
-              >
-                About Us
+                home
               </Link>
               <Link
                 href="/products"
-                className="block text-foreground hover:text-primary transition-colors font-medium"
+                className="block text-foreground hover:text-primary transition-colors font-semibold"
                 onClick={() => setIsMobileMenuOpen(false)}
                 data-testid="link-categories-mobile"
               >
-                Categories
+                categories
               </Link>
               <Link
-                href="/products?featured=true"
-                className="block text-foreground hover:text-primary transition-colors font-medium"
+                href="/about"
+                className="block text-foreground hover:text-primary transition-colors font-semibold"
                 onClick={() => setIsMobileMenuOpen(false)}
-                data-testid="link-featured-mobile"
+                data-testid="link-about-mobile"
               >
-                Featured
+                about
               </Link>
               <Link
                 href="/contact"
-                className="block text-foreground hover:text-primary transition-colors font-medium"
+                className="block text-foreground hover:text-primary transition-colors font-semibold"
                 onClick={() => setIsMobileMenuOpen(false)}
                 data-testid="link-contact-mobile"
               >
-                Contact Me
+                contact
               </Link>
+              {user?.isAdmin && (
+                <Link
+                  href="/admin/dashboard"
+                  className="block text-foreground hover:text-primary transition-colors font-semibold"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  data-testid="link-dashboard-mobile"
+                >
+                  dashboard
+                </Link>
+              )}
+              {/* Mobile Authentication Actions */}
+              {user && (
+                <div className="pt-2 border-t border-border sm:hidden">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-foreground hover:text-primary transition-colors font-semibold"
+                    onClick={() => {
+                      logoutMutation.mutate();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    disabled={logoutMutation.isPending}
+                    data-testid="button-logout-mobile"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    logout
+                  </Button>
+                </div>
+              )}
               <div className="pt-4 border-t border-border">
                 <form onSubmit={handleSearch} className="flex gap-2" data-testid="form-search-mobile">
                   <Input
@@ -202,6 +275,7 @@ export default function Header() {
       </header>
 
       <CartSidebar />
+      <WishlistSidebar isOpen={isWishlistOpen} setIsOpen={setIsWishlistOpen} />
     </>
   );
 }

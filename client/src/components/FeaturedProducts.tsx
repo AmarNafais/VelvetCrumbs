@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,10 @@ import type { Product } from "@shared/schema";
 
 export default function FeaturedProducts() {
   const [currentOffset, setCurrentOffset] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(4);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", "featured"],
@@ -14,14 +18,76 @@ export default function FeaturedProducts() {
   });
 
   const itemWidth = 320; // Approximate width of each product card
-  const maxOffset = Math.max(0, (products.length - 4) * itemWidth);
+  const gap = 24; // gap-6 = 24px
+  const itemWidthWithGap = itemWidth + gap;
+  const maxOffset = Math.max(0, (products.length - visibleCount) * itemWidthWithGap);
+
+  // Calculate visible items based on screen size
+  useEffect(() => {
+    const updateVisibleCount = () => {
+      if (!carouselRef.current) return;
+      
+      const containerWidth = carouselRef.current.clientWidth;
+      const calculated = Math.floor(containerWidth / itemWidthWithGap) || 1;
+      setVisibleCount(Math.min(calculated, products.length));
+    };
+
+    updateVisibleCount();
+    window.addEventListener('resize', updateVisibleCount);
+    return () => window.removeEventListener('resize', updateVisibleCount);
+  }, [products.length, itemWidthWithGap]);
 
   const slideNext = () => {
-    setCurrentOffset(prev => Math.min(prev + itemWidth, maxOffset));
+    setCurrentOffset(prev => Math.min(prev + itemWidthWithGap, maxOffset));
   };
 
   const slidePrev = () => {
-    setCurrentOffset(prev => Math.max(prev - itemWidth, 0));
+    setCurrentOffset(prev => Math.max(prev - itemWidthWithGap, 0));
+  };
+
+  // Touch/Swipe handlers for mobile with axis lock
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const deltaX = Math.abs(touchStartX.current - currentX);
+    const deltaY = Math.abs(touchStartY.current - currentY);
+    
+    // If horizontal movement is greater than vertical, prevent default scrolling
+    if (deltaX > deltaY && deltaX > 10) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchStartX.current - touchEndX;
+    const deltaY = touchStartY.current - touchEndY;
+    const minSwipeDistance = 50;
+    
+    // Only trigger swipe if horizontal movement is greater than vertical
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+      if (deltaX > 0) {
+        // Swiped left - go to next
+        slideNext();
+      } else {
+        // Swiped right - go to previous
+        slidePrev();
+      }
+    }
+    
+    // Reset touch positions
+    touchStartX.current = null;
+    touchStartY.current = null;
   };
 
   if (isLoading) {
@@ -64,7 +130,7 @@ export default function FeaturedProducts() {
               Discover our most popular treats, each one carefully crafted to bring joy to your special moments. ✨
             </p>
           </div>
-          <div className="flex space-x-2">
+          <div className="hidden md:flex space-x-2">
             <Button
               variant="outline"
               size="icon"
@@ -86,10 +152,13 @@ export default function FeaturedProducts() {
           </div>
         </div>
 
-        <div className="relative overflow-hidden">
+        <div className="relative overflow-hidden" ref={carouselRef}>
           <div
-            className="flex transition-transform duration-300 ease-in-out gap-6"
+            className="flex transition-transform duration-300 ease-in-out gap-6 select-none"
             style={{ transform: `translateX(-${currentOffset}px)` }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             data-testid="featured-carousel"
           >
             {products.map((product) => (

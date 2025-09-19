@@ -1,8 +1,11 @@
 import { Link } from "wouter";
-import { Heart, Star, ShoppingCart } from "lucide-react";
+import { Heart, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { useWishlist } from "@/hooks/use-wishlist";
+import { useAuth } from "@/hooks/use-auth";
+import RatingDisplay from "@/components/RatingDisplay";
 import type { Product } from "@shared/schema";
 
 interface ProductCardProps {
@@ -13,6 +16,8 @@ interface ProductCardProps {
 export default function ProductCard({ product, featured }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { isProductInWishlist, addToWishlistMutation, removeFromWishlistMutation } = useWishlist();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -23,11 +28,31 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
     });
   };
 
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please log in to add items to your wishlist.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const inWishlist = isProductInWishlist(product.id);
+    
+    if (inWishlist) {
+      removeFromWishlistMutation.mutate(product.id);
+    } else {
+      addToWishlistMutation.mutate(product.id);
+    }
+  };
+
   const formatPrice = (price: string) => {
     return `LKR ${parseFloat(price).toLocaleString()}`;
   };
-
-  const rating = parseFloat(product.rating || "5.0");
 
   return (
     <div className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 group h-full flex flex-col" data-testid={`product-card-${product.id}`}>
@@ -53,10 +78,16 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
           )}
         </div>
         <button 
-          className="absolute top-4 right-4 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center text-gray-600 hover:text-red-500 transition-colors"
+          className={`absolute top-4 right-4 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center transition-colors ${
+            user && isProductInWishlist(product.id) 
+              ? 'text-red-500 hover:text-red-600' 
+              : 'text-gray-600 hover:text-red-500'
+          }`}
+          onClick={handleWishlistToggle}
+          disabled={addToWishlistMutation.isPending || removeFromWishlistMutation.isPending}
           data-testid={`button-wishlist-${product.id}`}
         >
-          <Heart className="h-4 w-4" />
+          <Heart className={`h-4 w-4 ${user && isProductInWishlist(product.id) ? 'fill-current' : ''}`} />
         </button>
       </div>
       
@@ -87,17 +118,11 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
               </span>
             )}
           </div>
-          <div className="flex items-center text-amber-600">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={`h-3 w-3 ${i < Math.floor(rating) ? 'fill-current' : ''}`}
-              />
-            ))}
-            <span className="text-xs text-muted-foreground ml-1" data-testid={`product-rating-${product.id}`}>
-              ({rating})
-            </span>
-          </div>
+          <RatingDisplay 
+            productId={product.id} 
+            size="sm" 
+            className="text-amber-600"
+          />
         </div>
 
         <Button

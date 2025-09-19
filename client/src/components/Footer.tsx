@@ -1,32 +1,42 @@
 import { Link } from "wouter";
-import { Facebook, Instagram, Phone, Mail, MapPin } from "lucide-react";
+import { Facebook, Instagram, Phone, Mail, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-foreground text-background py-16" data-testid="footer-main">
+    <footer className="bg-background border-t border-border py-12" data-testid="footer-main">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand Info */}
-          <div className="lg:col-span-2" data-testid="section-brand">
-            <div className="text-2xl font-bold mb-4 tracking-tight">
+        <div className="flex items-center justify-between">
+          {/* Cooking Tips */}
+          <div className="flex items-center space-x-4" data-testid="section-cooking-tips">
+            <button className="p-2 hover:bg-muted rounded-full transition-colors" data-testid="button-tips-prev">
+              <ChevronLeft className="h-5 w-5 text-primary" />
+            </button>
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-foreground mb-1">Cooking Tips</h3>
+              <p className="text-sm text-muted-foreground">Browse 112 Tips</p>
+            </div>
+            <button className="p-2 hover:bg-muted rounded-full transition-colors" data-testid="button-tips-next">
+              <ChevronRight className="h-5 w-5 text-primary" />
+            </button>
+          </div>
+
+          {/* Center Logo */}
+          <div className="text-center" data-testid="section-brand">
+            <div className="text-2xl font-bold mb-2 tracking-tight">
               <span className="text-primary">Velvet</span>
               <span className="text-accent-foreground ml-1">Crumbs</span>
             </div>
-            <p className="text-gray-300 leading-relaxed mb-6 max-w-md">
-              Handcrafted delights for every occasion. At Velvet Crumbs, we believe that every celebration 
-              deserves a touch of homemade charm. Made with love and the finest ingredients.
-            </p>
             <div className="flex space-x-4">
               <a 
                 href="#" 
-                className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-primary transition-colors"
+                className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                 data-testid="link-facebook"
               >
                 <Facebook className="h-4 w-4" />
               </a>
               <a 
                 href="#" 
-                className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-primary transition-colors"
+                className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                 data-testid="link-instagram"
               >
                 <Instagram className="h-4 w-4" />
@@ -34,64 +44,19 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div data-testid="section-links">
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/" className="text-gray-300 hover:text-white transition-colors" data-testid="link-footer-home">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="text-gray-300 hover:text-white transition-colors" data-testid="link-footer-about">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/products" className="text-gray-300 hover:text-white transition-colors" data-testid="link-footer-products">
-                  Products
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-gray-300 hover:text-white transition-colors" data-testid="link-footer-contact">
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact Info */}
-          <div data-testid="section-contact">
-            <h3 className="text-lg font-semibold mb-4">Contact Info</h3>
-            <div className="space-y-3">
-              <div className="flex items-start">
-                <Phone className="text-primary mr-3 mt-1 h-4 w-4" />
-                <div>
-                  <p className="text-gray-300">+94 76 059 9559</p>
-                  <p className="text-gray-400 text-sm">Call for orders</p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <Mail className="text-primary mr-3 mt-1 h-4 w-4" />
-                <div>
-                  <p className="text-gray-300">info@velvetcrumbs.lk</p>
-                  <p className="text-gray-400 text-sm">Email us anytime</p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <MapPin className="text-primary mr-3 mt-1 h-4 w-4" />
-                <div>
-                  <p className="text-gray-300">Tihariya, Sri Lanka</p>
-                  <p className="text-gray-400 text-sm">Island-wide delivery</p>
-                </div>
-              </div>
+          {/* Recipes */}
+          <div className="flex items-center space-x-4" data-testid="section-recipes">
+            <button className="p-2 hover:bg-muted rounded-full transition-colors" data-testid="button-recipes-prev">
+              <ChevronLeft className="h-5 w-5 text-primary" />
+            </button>
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-foreground mb-1">Recipes</h3>
+              <p className="text-sm text-muted-foreground">91 recipes available</p>
             </div>
+            <button className="p-2 hover:bg-muted rounded-full transition-colors" data-testid="button-recipes-next">
+              <ChevronRight className="h-5 w-5 text-primary" />
+            </button>
           </div>
-        </div>
-
-        <div className="border-t border-gray-700 mt-12 pt-8 text-center">
-          <p className="text-gray-400">Copyright 2024 © Velvet Crumbs. All rights reserved.</p>
         </div>
       </div>
     </footer>

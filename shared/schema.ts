@@ -57,10 +57,13 @@ export const cartItems = pgTable("cart_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   productId: varchar("product_id").notNull().references(() => products.id),
   quantity: integer("quantity").notNull().default(1),
-  sessionId: text("session_id").notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
+  sessionId: text("session_id"), // For guest users only
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
+  userProductUnique: unique("cart_user_product_unique").on(table.userId, table.productId),
   sessionProductUnique: unique("cart_session_product_unique").on(table.sessionId, table.productId),
+  userIdx: index("cart_items_user_id_idx").on(table.userId),
   sessionIdx: index("cart_items_session_id_idx").on(table.sessionId),
 }));
 
@@ -134,6 +137,34 @@ export const orderItemAddOns = pgTable("order_item_add_ons", {
   orderItemIdx: index("order_item_add_ons_order_item_id_idx").on(table.orderItemId),
 }));
 
+// Wishlist table for logged-in users
+export const wishlists = pgTable("wishlists", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userProductUnique: unique("wishlist_user_product_unique").on(table.userId, table.productId),
+  userIdx: index("wishlists_user_id_idx").on(table.userId),
+  productIdx: index("wishlists_product_id_idx").on(table.productId),
+}));
+
+// Reviews table for user product reviews and ratings
+export const reviews = pgTable("reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(), // 1-5 stars
+  reviewText: text("review_text"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userProductUnique: unique("review_user_product_unique").on(table.userId, table.productId),
+  userIdx: index("reviews_user_id_idx").on(table.userId),
+  productIdx: index("reviews_product_id_idx").on(table.productId),
+  ratingIdx: index("reviews_rating_idx").on(table.rating),
+}));
+
 // Relations
 export const categoriesRelations = relations(categories, ({ many }) => ({
   products: many(products),
@@ -148,12 +179,18 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   images: many(productImages),
   addOns: many(productAddOns),
   orderItems: many(orderItems),
+  wishlists: many(wishlists),
+  reviews: many(reviews),
 }));
 
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   product: one(products, {
     fields: [cartItems.productId],
     references: [products.id],
+  }),
+  user: one(users, {
+    fields: [cartItems.userId],
+    references: [users.id],
   }),
 }));
 
@@ -181,6 +218,9 @@ export const productAddOnsRelations = relations(productAddOns, ({ one }) => ({
 
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
+  wishlists: many(wishlists),
+  reviews: many(reviews),
+  cartItems: many(cartItems),
 }));
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
@@ -211,6 +251,28 @@ export const orderItemAddOnsRelations = relations(orderItemAddOns, ({ one }) => 
   addOn: one(addOns, {
     fields: [orderItemAddOns.addOnId],
     references: [addOns.id],
+  }),
+}));
+
+export const wishlistsRelations = relations(wishlists, ({ one }) => ({
+  user: one(users, {
+    fields: [wishlists.userId],
+    references: [users.id],
+  }),
+  product: one(products, {
+    fields: [wishlists.productId],
+    references: [products.id],
+  }),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  user: one(users, {
+    fields: [reviews.userId],
+    references: [users.id],
+  }),
+  product: one(products, {
+    fields: [reviews.productId],
+    references: [products.id],
   }),
 }));
 
@@ -256,6 +318,20 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
 export const insertOrderItemAddOnSchema = createInsertSchema(orderItemAddOns).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertWishlistSchema = createInsertSchema(wishlists).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertReviewSchema = createInsertSchema(reviews).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  rating: z.number().int().min(1).max(5),
+  reviewText: z.string().min(10, "Review must be at least 10 characters").max(1000, "Review must be less than 1000 characters").optional(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -308,6 +384,12 @@ export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItemAddOn = z.infer<typeof insertOrderItemAddOnSchema>;
 export type OrderItemAddOn = typeof orderItemAddOns.$inferSelect;
 
+export type InsertWishlist = z.infer<typeof insertWishlistSchema>;
+export type Wishlist = typeof wishlists.$inferSelect;
+
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type Review = typeof reviews.$inferSelect;
+
 export type LoginUser = z.infer<typeof loginUserSchema>;
 
 // Extended types for frontend
@@ -322,3 +404,5 @@ export type OrderWithItems = Order & { items: (OrderItem & {
 export type OrderItemWithAddOns = OrderItem & { 
   addOns: (OrderItemAddOn & { addOn: AddOn | null })[];
 };
+export type WishlistWithProduct = Wishlist & { product: Product };
+export type ReviewWithUser = Review & { user: User };
