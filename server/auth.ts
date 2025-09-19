@@ -15,6 +15,8 @@ declare global {
   }
 }
 
+//test
+
 const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string) {
