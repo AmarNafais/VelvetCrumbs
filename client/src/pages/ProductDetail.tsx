@@ -31,7 +31,7 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    
+
     addToCart(product.id, quantity);
     toast({
       title: "Added to cart",
@@ -91,13 +91,13 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-background" data-testid="product-detail-page">
       <Header />
-      
+
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-4">
           {/* Breadcrumb */}
           <div className="mb-8">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => window.history.back()}
               className="mb-4"
               data-testid="button-back"
@@ -129,7 +129,7 @@ export default function ProductDetail() {
                 <h1 className="text-4xl font-bold text-foreground mb-4" data-testid="product-detail-name">
                   {product.name}
                 </h1>
-                
+
                 {/* Rating */}
                 <div className="flex items-center mb-4">
                   <RatingDisplay productId={product.id} size="md" className="mr-4" />
@@ -215,9 +215,9 @@ export default function ProductDetail() {
                   data-testid="button-add-to-cart"
                 >
                   <ShoppingCart className="mr-2 h-5 w-5" />
-                  {isCustomProduct ? "Customize & Order" : "Pre-Order Now"}
+                  Pre-Order Now
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   size="lg"
@@ -259,7 +259,7 @@ export default function ProductDetail() {
                 <TabsTrigger value="reviews" data-testid="tab-reviews">Reviews</TabsTrigger>
                 <TabsTrigger value="write-review" data-testid="tab-write-review">Write a Review</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="reviews" className="mt-6">
                 <div className="space-y-6">
                   <div>
@@ -268,7 +268,7 @@ export default function ProductDetail() {
                   </div>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="write-review" className="mt-6">
                 <div className="max-w-2xl">
                   <ReviewForm productId={product.id} />

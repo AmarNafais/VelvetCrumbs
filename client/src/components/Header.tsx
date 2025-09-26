@@ -117,27 +117,18 @@ export default function Header() {
                     size="sm"
                     className="hidden sm:flex px-2 sm:px-4 py-1 sm:py-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground text-xs sm:text-sm"
                     onClick={() => setLocation("/auth")}
-                    data-testid="button-account"
+                    data-testid="button-login"
                   >
-                    account
+                    login
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="sm:hidden p-1"
                     onClick={() => setLocation("/auth")}
-                    data-testid="button-account-mobile"
+                    data-testid="button-login-mobile"
                   >
                     <LogIn className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="hidden xs:flex px-2 sm:px-4 py-1 sm:py-2 bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm"
-                    onClick={() => setLocation("/auth?mode=register")}
-                    data-testid="button-register"
-                  >
-                    register
                   </Button>
                 </>
               )}

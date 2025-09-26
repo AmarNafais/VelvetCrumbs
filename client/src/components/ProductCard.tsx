@@ -31,7 +31,7 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!user) {
       toast({
         title: "Login required",
@@ -42,7 +42,7 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
     }
 
     const inWishlist = isProductInWishlist(product.id);
-    
+
     if (inWishlist) {
       removeFromWishlistMutation.mutate(product.id);
     } else {
@@ -77,12 +77,11 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
             </span>
           )}
         </div>
-        <button 
-          className={`absolute top-4 right-4 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center transition-colors ${
-            user && isProductInWishlist(product.id) 
-              ? 'text-red-500 hover:text-red-600' 
+        <button
+          className={`absolute top-4 right-4 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center transition-colors ${user && isProductInWishlist(product.id)
+              ? 'text-red-500 hover:text-red-600'
               : 'text-gray-600 hover:text-red-500'
-          }`}
+            }`}
           onClick={handleWishlistToggle}
           disabled={addToWishlistMutation.isPending || removeFromWishlistMutation.isPending}
           data-testid={`button-wishlist-${product.id}`}
@@ -90,7 +89,7 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
           <Heart className={`h-4 w-4 ${user && isProductInWishlist(product.id) ? 'fill-current' : ''}`} />
         </button>
       </div>
-      
+
       <div className="p-6 flex flex-col flex-1">
         <Link href={`/product/${product.id}`} className="block mb-4 flex-1">
           <h3 className="text-lg font-semibold text-foreground mb-2 h-14 line-clamp-2" data-testid={`product-name-${product.id}`}>
@@ -118,9 +117,9 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
               </span>
             )}
           </div>
-          <RatingDisplay 
-            productId={product.id} 
-            size="sm" 
+          <RatingDisplay
+            productId={product.id}
+            size="sm"
             className="text-amber-600"
           />
         </div>
@@ -131,7 +130,7 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
           data-testid={`button-add-cart-${product.id}`}
         >
           <ShoppingCart className="mr-2 h-4 w-4" />
-          {product.name.includes("Custom") ? "Customize Now" : "Pre-Order Now"}
+          Pre-Order Now
         </Button>
       </div>
     </div>
