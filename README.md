@@ -177,18 +177,24 @@ sudo systemctl enable mysql
 # Secure MySQL installation
 sudo mysql_secure_installation
 
+# Generate secure database password
+DB_PASSWORD=$(openssl rand -base64 32)
+echo "Your MySQL password: $DB_PASSWORD"
+
 # Create database and user
-sudo mysql
+sudo mysql -u root
 ```
 
 Inside MySQL:
 ```sql
 CREATE DATABASE velvetcrumbs;
-CREATE USER 'velvetcrumbs_user'@'localhost' IDENTIFIED BY 'your_secure_password';
+CREATE USER 'velvetcrumbs_user'@'localhost' IDENTIFIED BY 'your_generated_password_here';
 GRANT ALL PRIVILEGES ON velvetcrumbs.* TO 'velvetcrumbs_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
 ```
+
+**⚠️ IMPORTANT**: Save the password you created. You'll need it for the `.env` file.
 
 #### 1.4 Install Nginx
 
@@ -267,24 +273,24 @@ Create a `.env` file in the root directory:
 nano .env
 ```
 
-Add the following configuration (adjust values for your setup):
+Add the following configuration (replace values with your actual settings):
 
 ```env
 # Application
 NODE_ENV=production
 PORT=5000
 
-# Database (choose one option)
-# Option 1: Cloud MySQL (e.g., PlanetScale, AWS RDS, DigitalOcean)
-DATABASE_URL=mysql://user:password@host:3306/velvetcrumbs
+# Database Configuration
+# IMPORTANT: Never share or commit this file to version control!
+# DATABASE_URL format: mysql://username:password@host:port/database
 
-# Option 2: Local MySQL
-# DATABASE_URL=mysql://velvetcrumbs_user:your_secure_password@localhost:3306/velvetcrumbs
+# Option 1: Local MySQL Server
+DATABASE_URL=mysql://velvetcrumbs_user:your_mysql_password_here@localhost:3306/velvetcrumbs
 
-# SSL Configuration (for cloud databases)
-# DATABASE_SSL=true
+# Option 2: Cloud MySQL (PlanetScale, AWS RDS, DigitalOcean, etc.)
+# DATABASE_URL=mysql://username:password@your-db-host.region.provider.com:3306/velvetcrumbs
 
-# Session
+# Session Secret (generate with command below)
 SESSION_SECRET=generate_a_very_long_random_string_at_least_32_characters_long
 
 # Email Service (Optional - Choose one)
@@ -293,13 +299,13 @@ SENDGRID_API_KEY=your_sendgrid_api_key
 FROM_EMAIL=orders@velvetcrumbs.lk
 ADMIN_EMAIL=admin@velvetcrumbs.lk
 
-# Option 2: SMTP/Nodemailer
+# Option 2: SMTP/Nodemailer (for Gmail or other SMTP services)
 # EMAIL_HOST=smtp.gmail.com
 # EMAIL_PORT=587
 # EMAIL_USER=your-email@gmail.com
 # EMAIL_PASSWORD=your-app-password
 
-# Firebase (if using Firebase features)
+# Firebase (Optional - only if using Firebase features)
 FIREBASE_API_KEY=your_firebase_api_key
 FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
 FIREBASE_PROJECT_ID=your-project-id
@@ -307,9 +313,22 @@ FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 FIREBASE_APP_ID=your_app_id
 
-# Domain
+# Domain Configuration
 DOMAIN=www.velvetcrumbs.lk
 ```
+
+**How to fill in DATABASE_URL:**
+
+1. **Get your credentials:**
+   - Username: `velvetcrumbs_user` (or whatever you created)
+   - Password: The password you generated during MySQL setup
+   - Host: `localhost` (for local) or cloud provider host
+   - Database: `velvetcrumbs`
+
+2. **Example DATABASE_URL:**
+   ```env
+   DATABASE_URL=mysql://velvetcrumbs_user:aB1cD2eF3gH4iJ5kL6mN7oP8@localhost:3306/velvetcrumbs
+   ```
 
 Save and exit (Ctrl+X, then Y, then Enter).
 
