@@ -1,14 +1,14 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, boolean, timestamp, unique, index, pgEnum } from "drizzle-orm/pg-core";
+import { mysqlTable, text, varchar, int, decimal, boolean, timestamp, unique, index, mysqlEnum } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Order status enum for data integrity
-export const orderStatusEnum = pgEnum('order_status', ['placed', 'in_progress', 'delivered', 'completed', 'canceled']);
+export const orderStatusEnum = mysqlEnum('order_status', ['placed', 'in_progress', 'delivered', 'completed', 'canceled']);
 
 // Users table for authentication and profile management
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const users = mysqlTable("users", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
