@@ -224,20 +224,7 @@ sudo npm install -g pm2
 
 ### Step 2: Application Setup
 
-#### 2.1 Create Application User
-
-```bash
-# Create a dedicated user for the application
-sudo adduser velvetcrumbs --disabled-password --gecos ""
-
-# Add to sudo group if needed
-sudo usermod -aG sudo velvetcrumbs
-
-# Switch to application user
-sudo su - velvetcrumbs
-```
-
-#### 2.2 Upload Your Code
+#### 2.1 Upload Your Code
 
 Choose one method:
 
@@ -251,23 +238,24 @@ cd VelvetCrumbs
 **Option B: Upload via SCP from your local machine**
 ```bash
 # From your Windows machine (Git Bash or PowerShell)
-scp -r C:/Users/nabee/Desktop/VelvetCrumbs username@your-server-ip:/home/velvetcrumbs/
+scp -r C:/Users/nabee/Desktop/VelvetCrumbs root@your-server-ip:/root/
 ```
 
 **Option C: Upload via FTP/SFTP**
 - Use FileZilla or WinSCP
-- Connect to your server
-- Upload the entire VelvetCrumbs folder to `/home/velvetcrumbs/`
+- Connect to your server as root
+- Upload the entire VelvetCrumbs folder to `/root/`
 
-#### 2.3 Install Dependencies
+#### 2.2 Install Dependencies
 
 ```bash
+cd ~/VelvetCrumbs
 npm install
 ```
 
-#### 2.4 Configure Environment Variables
+#### 2.3 Configure Environment Variables
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the application root directory:
 
 ```bash
 nano .env
@@ -332,7 +320,7 @@ DOMAIN=www.velvetcrumbs.lk
 
 Save and exit (Ctrl+X, then Y, then Enter).
 
-#### 2.5 Generate Secure Session Secret
+#### 2.4 Generate Secure Session Secret
 
 ```bash
 # Generate a secure random string for SESSION_SECRET
@@ -341,7 +329,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 Copy the output and update `SESSION_SECRET` in your `.env` file.
 
-#### 2.6 Initialize Database
+#### 2.5 Initialize Database
 
 ```bash
 # Push database schema
@@ -541,9 +529,8 @@ Add the following script:
 #!/bin/bash
 # VelvetCrumbs Database Backup Script
 
-# Load environment variables
-source ~/.bashrc
-export $(grep -v '^#' /home/velvetcrumbs/VelvetCrumbs/.env | xargs)
+# Load environment variables from .env file
+export $(grep -v '^#' ~/VelvetCrumbs/.env | xargs)
 
 BACKUP_DIR="$HOME/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
@@ -577,7 +564,7 @@ chmod +x ~/backups/backup-db.sh
 crontab -e
 
 # Add this line to run backup daily at 2 AM
-0 2 * * * /home/velvetcrumbs/backups/backup-db.sh >> /home/velvetcrumbs/backups/backup.log 2>&1
+0 2 * * * ~/backups/backup-db.sh >> ~/backups/backup.log 2>&1
 ```
 
 ### Step 8: Post-Deployment Tasks
