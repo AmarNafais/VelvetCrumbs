@@ -1,6 +1,8 @@
 # VelvetCrumbs E-Commerce Platform
 
-A modern, full-stack e-commerce platform built with React, Express, PostgreSQL, and TypeScript.
+A modern, full-stack e-commerce platform built with React, Express, MySQL, and TypeScript.
+
+🌐 **Live Site**: www.velvetcrumbs.lk
 
 ## 🚀 Features
 
@@ -29,7 +31,7 @@ A modern, full-stack e-commerce platform built with React, Express, PostgreSQL, 
 ### Backend
 - Node.js with Express
 - TypeScript
-- PostgreSQL database
+- MySQL database
 - Drizzle ORM
 - Passport.js for authentication
 - Express Session for session management
@@ -39,7 +41,99 @@ A modern, full-stack e-commerce platform built with React, Express, PostgreSQL, 
 - Firebase (optional features)
 - SendGrid/Nodemailer for emails
 
-## 🖥️ Linux Server Deployment Guide
+## � Quick Start (Local Development)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/yourusername/VelvetCrumbs.git
+cd VelvetCrumbs
+
+# 2. Install dependencies
+npm install
+
+# 3. Create .env file
+cp .env.example .env
+# Edit .env with your database credentials
+
+# 4. Setup database
+npm run db:push
+
+# 5. Start development server
+npm run dev
+
+# Visit http://localhost:5000
+```
+
+## 🌐 How to Host on www.velvetcrumbs.lk
+
+### Quick Hosting Steps:
+
+**1. Get a Linux Server**
+   - Providers: DigitalOcean, Linode, Vultr, AWS EC2
+   - Choose: Ubuntu 20.04+, at least 2GB RAM
+   - Cost: ~$6-12/month
+
+**2. Point Your Domain**
+   - Go to your domain registrar (where you bought velvetcrumbs.lk)
+   - Add DNS A record: `www` → Your server IP address
+   - Add DNS A record: `@` → Your server IP address
+   - Wait 5-10 minutes for DNS to propagate
+
+**3. Upload Your Code**
+   - Use Git (recommended): `git clone` on server
+   - Or use SCP/SFTP from Windows to server
+   - Or zip and upload via file transfer
+
+**4. Follow Deployment Steps Below**
+   - The detailed guide below walks you through:
+     - Installing required software
+     - Configuring database and environment
+     - Setting up HTTPS/SSL
+     - Going live!
+
+⏱️ **Total Time**: 30-45 minutes
+
+---
+
+## 🖥️ Production Hosting Guide (www.velvetcrumbs.lk)
+
+This guide will walk you through deploying VelvetCrumbs to a Linux server with your custom domain.
+
+### 📋 What You'll Need
+
+Before starting, ensure you have:
+
+1. **Server**: Linux VPS (Ubuntu 20.04+, DigitalOcean, Linode, AWS EC2, etc.)
+2. **Domain**: www.velvetcrumbs.lk pointing to your server IP via DNS A record
+3. **Access**: SSH access with root or sudo privileges
+4. **Database**: MySQL (local on server or cloud service like PlanetScale, AWS RDS)
+
+### 🎯 Hosting Overview
+
+```
+Your Computer → Upload Code → Linux Server → Nginx → Your App (Port 5000)
+                                    ↓
+                              SSL Certificate (HTTPS)
+                                    ↓
+                              www.velvetcrumbs.lk
+```
+
+### ✅ Deployment Checklist
+
+Follow these steps in order:
+
+- [ ] **Step 1**: Setup server (Node.js, MySQL, Nginx)
+- [ ] **Step 2**: Upload your code to server
+- [ ] **Step 3**: Install dependencies and configure environment
+- [ ] **Step 4**: Build application
+- [ ] **Step 5**: Configure Nginx reverse proxy
+- [ ] **Step 6**: Setup SSL certificate (HTTPS)
+- [ ] **Step 7**: Start application with PM2
+- [ ] **Step 8**: Test and verify
+- [ ] **Step 9**: Setup automatic backups
+- [ ] **Step 10**: Configure monitoring
+
+---
 
 ### Prerequisites
 
@@ -137,18 +231,27 @@ sudo usermod -aG sudo velvetcrumbs
 sudo su - velvetcrumbs
 ```
 
-#### 2.2 Clone the Repository
+#### 2.2 Upload Your Code
 
+Choose one method:
+
+**Option A: Using Git (Recommended)**
 ```bash
-# Navigate to home directory
 cd ~
-
-# Clone your repository
 git clone https://github.com/yourusername/VelvetCrumbs.git
-# OR upload your code using SCP/SFTP
-
 cd VelvetCrumbs
 ```
+
+**Option B: Upload via SCP from your local machine**
+```bash
+# From your Windows machine (Git Bash or PowerShell)
+scp -r C:/Users/nabee/Desktop/VelvetCrumbs username@your-server-ip:/home/velvetcrumbs/
+```
+
+**Option C: Upload via FTP/SFTP**
+- Use FileZilla or WinSCP
+- Connect to your server
+- Upload the entire VelvetCrumbs folder to `/home/velvetcrumbs/`
 
 #### 2.3 Install Dependencies
 
@@ -419,14 +522,22 @@ Add the following script:
 #!/bin/bash
 # VelvetCrumbs Database Backup Script
 
+# Load environment variables
+source ~/.bashrc
+export $(grep -v '^#' /home/velvetcrumbs/VelvetCrumbs/.env | xargs)
+
 BACKUP_DIR="$HOME/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
-DB_NAME="velvetcrumbs"
-DB_USER="velvetcrumbs_user"
-DB_PASS="your_secure_password"
+
+# Extract database credentials from DATABASE_URL
+# Format: mysql://username:password@host:port/database
+DB_USER=$(echo $DATABASE_URL | sed -n 's/.*:\/\/\([^:]*\):.*/\1/p')
+DB_PASS=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
+DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')
+DB_NAME=$(echo $DATABASE_URL | sed -n 's/.*\/\([^?]*\).*/\1/p')
 
 # Create backup
-mysqldump -u $DB_USER -p$DB_PASS $DB_NAME > "$BACKUP_DIR/velvetcrumbs_$DATE.sql"
+mysqldump -h $DB_HOST -u $DB_USER -p$DB_PASS $DB_NAME > "$BACKUP_DIR/velvetcrumbs_$DATE.sql"
 
 # Remove backups older than 7 days
 find $BACKUP_DIR -name "velvetcrumbs_*.sql" -mtime +7 -delete

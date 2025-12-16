@@ -7,7 +7,7 @@ import {
 import { db } from "./db";
 import { eq, and, ilike, or, desc, sql } from "drizzle-orm";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
+import MySQLStoreFactory from "connect-session-mysql";
 
 export interface IStorage {
   // Categories
@@ -102,14 +102,19 @@ export class DatabaseStorage implements IStorage {
   constructor() {
     // Initialize session store with proper fallback
     if (process.env.DATABASE_URL) {
-      // Use PostgreSQL session store in production/development with database
-      const PostgresSessionStore = connectPg(session);
-      this.sessionStore = new PostgresSessionStore({
-        conString: process.env.DATABASE_URL,
-        createTableIfMissing: true,
-        errorLog: (error: Error) => {
-          console.error('Session store error:', error);
-        },
+      // Use MySQL session store in production/development with database
+      const MySQLStore = MySQLStoreFactory(session);
+      this.sessionStore = new MySQLStore({
+        connectionUrl: process.env.DATABASE_URL,
+        createDatabaseTable: true,
+        schema: {
+          tableName: 'sessions',
+          columnNames: {
+            session_id: 'session_id',
+            expires: 'expires',
+            data: 'data'
+          }
+        }
       });
     } else {
       // Fallback to MemoryStore for development without database
