@@ -35,7 +35,7 @@ A modern, full-stack e-commerce platform built with React, Express, PostgreSQL, 
 - Express Session for session management
 
 ### Infrastructure
-- Neon Database (PostgreSQL)
+- MySQL Database (Local or Cloud)
 - Firebase (optional features)
 - SendGrid/Nodemailer for emails
 
@@ -48,7 +48,7 @@ Before deploying to your Linux server, ensure you have:
 - Ubuntu 20.04 LTS or newer (or similar Linux distribution)
 - Root or sudo access
 - Domain name (www.velvetcrumbs.lk) pointing to your server IP
-- PostgreSQL database (we recommend Neon Database or local PostgreSQL)
+- MySQL database (local or cloud-hosted)
 
 ### Step 1: Server Setup
 
@@ -70,26 +70,30 @@ node --version  # Should show v20.x.x
 npm --version   # Should show v10.x.x
 ```
 
-#### 1.3 Install PostgreSQL (if using local database)
+#### 1.3 Install MySQL (if using local database)
 
 ```bash
-# Install PostgreSQL
-sudo apt install -y postgresql postgresql-contrib
+# Install MySQL Server
+sudo apt install -y mysql-server
 
-# Start PostgreSQL service
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
+# Start MySQL service
+sudo systemctl start mysql
+sudo systemctl enable mysql
+
+# Secure MySQL installation
+sudo mysql_secure_installation
 
 # Create database and user
-sudo -u postgres psql
+sudo mysql
 ```
 
-Inside PostgreSQL:
+Inside MySQL:
 ```sql
 CREATE DATABASE velvetcrumbs;
-CREATE USER velvetcrumbs_user WITH ENCRYPTED PASSWORD 'your_secure_password';
-GRANT ALL PRIVILEGES ON DATABASE velvetcrumbs TO velvetcrumbs_user;
-\q
+CREATE USER 'velvetcrumbs_user'@'localhost' IDENTIFIED BY 'your_secure_password';
+GRANT ALL PRIVILEGES ON velvetcrumbs.* TO 'velvetcrumbs_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
 ```
 
 #### 1.4 Install Nginx
@@ -168,15 +172,14 @@ NODE_ENV=production
 PORT=5000
 
 # Database (choose one option)
-# Option 1: Neon Database (Recommended)
-DATABASE_URL=postgresql://user:password@ep-your-endpoint.region.aws.neon.tech/velvetcrumbs?sslmode=require
+# Option 1: Cloud MySQL (e.g., PlanetScale, AWS RDS, DigitalOcean)
+DATABASE_URL=mysql://user:password@host:3306/velvetcrumbs
 
-# Option 2: Local PostgreSQL
-# DATABASE_URL=postgresql://velvetcrumbs_user:your_secure_password@localhost:5432/velvetcrumbs
+# Option 2: Local MySQL
+# DATABASE_URL=mysql://velvetcrumbs_user:your_secure_password@localhost:3306/velvetcrumbs
 
-# SSL Configuration
-PGSSLMODE=require
-NODE_TLS_REJECT_UNAUTHORIZED=0
+# SSL Configuration (for cloud databases)
+# DATABASE_SSL=true
 
 # Session
 SESSION_SECRET=generate_a_very_long_random_string_at_least_32_characters_long
@@ -419,9 +422,11 @@ Add the following script:
 BACKUP_DIR="$HOME/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 DB_NAME="velvetcrumbs"
+DB_USER="velvetcrumbs_user"
+DB_PASS="your_secure_password"
 
 # Create backup
-pg_dump $DATABASE_URL > "$BACKUP_DIR/velvetcrumbs_$DATE.sql"
+mysqldump -u $DB_USER -p$DB_PASS $DB_NAME > "$BACKUP_DIR/velvetcrumbs_$DATE.sql"
 
 # Remove backups older than 7 days
 find $BACKUP_DIR -name "velvetcrumbs_*.sql" -mtime +7 -delete
@@ -629,13 +634,13 @@ pm2 restart velvetcrumbs
 
 ```bash
 # Test database connection
-psql $DATABASE_URL
+mysql -u velvetcrumbs_user -p velvetcrumbs
 
-# Check if PostgreSQL is running
-sudo systemctl status postgresql
+# Check if MySQL is running
+sudo systemctl status mysql
 
-# Restart PostgreSQL
-sudo systemctl restart postgresql
+# Restart MySQL
+sudo systemctl restart mysql
 ```
 
 ### Nginx Issues

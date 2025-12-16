@@ -9,8 +9,8 @@ export const orderStatusEnum = mysqlEnum('order_status', ['placed', 'in_progress
 // Users table for authentication and profile management
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
+  username: text("username").notNull(),
+  email: text("email").notNull(),
   password: text("password").notNull(),
   firstName: text("first_name"),
   lastName: text("last_name"),
@@ -21,43 +21,45 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  usernameIdx: index("users_username_idx").on(table.username),
-  emailIdx: index("users_email_idx").on(table.email),
+  usernameIdx: unique("users_username_unique").on(table.username),
+  emailIdx: unique("users_email_unique").on(table.email),
 }));
 
-export const categories = pgTable("categories", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const categories = mysqlTable("categories", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   description: text("description"),
   icon: text("icon").notNull(),
   coverImage: text("cover_image"), // Added for admin panel
-  slug: text("slug").notNull().unique(),
-  itemCount: integer("item_count").notNull().default(0),
-});
+  slug: text("slug").notNull(),
+  itemCount: int("item_count").notNull().default(0),
+}, (table) => ({
+  slugIdx: unique("categories_slug_unique").on(table.slug),
+}));
 
-export const products = pgTable("products", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const products = mysqlTable("products", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   description: text("description").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
   image: text("image").notNull(), // Keep as primary image
   duration: text("duration"), // Added for admin panel (e.g. "15 min prep time")
-  categoryId: varchar("category_id").notNull().references(() => categories.id),
+  categoryId: varchar("category_id", { length: 36 }).notNull().references(() => categories.id),
   featured: boolean("featured").default(false),
   inStock: boolean("in_stock").default(true),
   rating: decimal("rating", { precision: 2, scale: 1 }).default("5.0"),
-  tags: text("tags").array().default([]),
+  tags: text("tags"), // Stores JSON array as string
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   categoryIdx: index("products_category_id_idx").on(table.categoryId),
 }));
 
-export const cartItems = pgTable("cart_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  productId: varchar("product_id").notNull().references(() => products.id),
-  quantity: integer("quantity").notNull().default(1),
-  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
+export const cartItems = mysqlTable("cart_items", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  productId: varchar("product_id", { length: 36 }).notNull().references(() => products.id),
+  quantity: int("quantity").notNull().default(1),
+  userId: varchar("user_id", { length: 36 }).references(() => users.id, { onDelete: "cascade" }),
   sessionId: text("session_id"), // For guest users only
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
@@ -68,11 +70,11 @@ export const cartItems = pgTable("cart_items", {
 }));
 
 // Multiple images for products
-export const productImages = pgTable("product_images", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+export const productImages = mysqlTable("product_images", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  productId: varchar("product_id", { length: 36 }).notNull().references(() => products.id, { onDelete: "cascade" }),
   url: text("url").notNull(),
-  position: integer("position").notNull().default(0),
+  position: int("position").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   productIdx: index("product_images_product_id_idx").on(table.productId),
@@ -80,26 +82,26 @@ export const productImages = pgTable("product_images", {
 }));
 
 // Add-ons management
-export const addOns = pgTable("add_ons", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const addOns = mysqlTable("add_ons", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   additionalPrice: decimal("additional_price", { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Many-to-many relationship between products and add-ons
-export const productAddOns = pgTable("product_add_ons", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
-  addOnId: varchar("add_on_id").notNull().references(() => addOns.id, { onDelete: "cascade" }),
+export const productAddOns = mysqlTable("product_add_ons", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  productId: varchar("product_id", { length: 36 }).notNull().references(() => products.id, { onDelete: "cascade" }),
+  addOnId: varchar("add_on_id", { length: 36 }).notNull().references(() => addOns.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   productAddOnUnique: unique("product_add_on_unique").on(table.productId, table.addOnId),
 }));
 
 // Orders management
-export const orders = pgTable("orders", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const orders = mysqlTable("orders", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email").notNull(),
   customerPhone: text("customer_phone").notNull(),
@@ -113,11 +115,11 @@ export const orders = pgTable("orders", {
 }));
 
 // Order items
-export const orderItems = pgTable("order_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
-  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "restrict" }),
-  quantity: integer("quantity").notNull(),
+export const orderItems = mysqlTable("order_items", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  orderId: varchar("order_id", { length: 36 }).notNull().references(() => orders.id, { onDelete: "cascade" }),
+  productId: varchar("product_id", { length: 36 }).notNull().references(() => products.id, { onDelete: "restrict" }),
+  quantity: int("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   lineTotal: decimal("line_total", { precision: 10, scale: 2 }).notNull(), // Total for this line item including add-ons
   createdAt: timestamp("created_at").defaultNow(),
@@ -126,10 +128,10 @@ export const orderItems = pgTable("order_items", {
 }));
 
 // Order item add-ons (proper relational model)
-export const orderItemAddOns = pgTable("order_item_add_ons", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  orderItemId: varchar("order_item_id").notNull().references(() => orderItems.id, { onDelete: "cascade" }),
-  addOnId: varchar("add_on_id").references(() => addOns.id, { onDelete: "restrict" }), // Nullable for deleted add-ons
+export const orderItemAddOns = mysqlTable("order_item_add_ons", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  orderItemId: varchar("order_item_id", { length: 36 }).notNull().references(() => orderItems.id, { onDelete: "cascade" }),
+  addOnId: varchar("add_on_id", { length: 36 }).references(() => addOns.id, { onDelete: "restrict" }), // Nullable for deleted add-ons
   addOnName: text("add_on_name").notNull(), // Snapshot at purchase time
   addOnPrice: decimal("add_on_price", { precision: 10, scale: 2 }).notNull(), // Snapshot at purchase time
   createdAt: timestamp("created_at").defaultNow(),
@@ -138,10 +140,10 @@ export const orderItemAddOns = pgTable("order_item_add_ons", {
 }));
 
 // Wishlist table for logged-in users
-export const wishlists = pgTable("wishlists", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+export const wishlists = mysqlTable("wishlists", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  productId: varchar("product_id", { length: 36 }).notNull().references(() => products.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   userProductUnique: unique("wishlist_user_product_unique").on(table.userId, table.productId),
@@ -150,11 +152,11 @@ export const wishlists = pgTable("wishlists", {
 }));
 
 // Reviews table for user product reviews and ratings
-export const reviews = pgTable("reviews", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
-  rating: integer("rating").notNull(), // 1-5 stars
+export const reviews = mysqlTable("reviews", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  productId: varchar("product_id", { length: 36 }).notNull().references(() => products.id, { onDelete: "cascade" }),
+  rating: int("rating").notNull(), // 1-5 stars
   reviewText: text("review_text"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
