@@ -1,34 +1,45 @@
 # Dependencies
 node_modules/
-functions/node_modules/
+package-lock.json
 
 # Build outputs
 dist/
 build/
-functions/lib/
+*.tsbuildinfo
 
 # Environment files
 .env
-.env.local
-.env.production
-.env.development
+.env.*
+!.env.example
 
 # Firebase
 .firebase/
-firebase-debug.log
-firestore-debug.log
-ui-debug.log
+*-debug.log
+
+# Database
+migrations/
+*.sql
+backups/
 
 # Cache and temporary files
 .cache/
 .parcel-cache/
 *.tmp
 *.temp
+*.log
 
-# Original entries
-node_modules
-dist
+# OS files
 .DS_Store
-server/public
-vite.config.ts.*
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Misc
 *.tar.gz
+.replit
+replit.md
